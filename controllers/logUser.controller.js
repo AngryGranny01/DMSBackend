@@ -10,7 +10,7 @@ exports.create = async (req, res) => {
     }
 
     // Extract log data from request body
-    const logData = req.body[0];
+    const logData = req.body;
 
     // Call the create function on the LogUser model to save the new Log
     LogUser.create(logData, (err, data) => {

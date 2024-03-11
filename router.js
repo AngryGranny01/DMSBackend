@@ -1,8 +1,7 @@
-const express = require("express");
-const projectController = require("../controllers/project.controller");
-const userController = require("../controllers/user.controller");
-const logController = require("../controllers/log.controller");
-const logUserController = require("../controllers/logUser.controller");
+const projectController = require("./controllers/project.controller");
+const userController = require("./controllers/user.controller");
+const logController = require("./controllers/log.controller");
+const logUserController = require("./controllers/logUser.controller");
 
 var router = require("express").Router();
 

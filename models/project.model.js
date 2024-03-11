@@ -25,7 +25,6 @@ Project.create = async (newProject, result) => {
             managerID: newProject.managerID,
             projectEndDate: new Date(newProject.projectEndDate)
         }
-        console.log(projectData)
 
         // Insert the project data into the Project table
         const [projectRows, fieldsUser] = await conn.query(insertProjectSql, projectData);

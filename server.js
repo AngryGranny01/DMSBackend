@@ -9,7 +9,7 @@ router.use(cors());
 router.use(parser.json())
 
 
-var routesDMS = require("./routers/router");
+var routesDMS = require("./router");
 router.use('/DMSSystem', routesDMS)
 /////
 router.listen(8080, () => {

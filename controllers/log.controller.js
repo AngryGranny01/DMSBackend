@@ -3,14 +3,14 @@ const { Log } = require("../models/log.model");
 // Create a new Log
 exports.create = async (req, res) => {
     // Validate request body
-    if (!req.body || !req.body[0]) {
+    if (!req.body || !req.body) {
         return res.status(400).send({
             message: "Invalid or empty request body"
         });
     }
 
     // Extract log data from request body
-    const logData = req.body[0];
+    const logData = req.body;
 
     // Call the create function on the Log model to save the new Log
     Log.create(logData, (err, data) => {
