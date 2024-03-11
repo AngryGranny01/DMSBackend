@@ -33,6 +33,6 @@ router.delete("/users", userController.delete);
 router.delete("/projects", projectController.delete);
 
 //-------------------------------------------- Check If Exists --------------------------------------------------------------//
-router.get("/users/exists", userController.checkIfExist);
+router.get("/user/exist", userController.checkIfExist);
 
 module.exports = router

@@ -109,16 +109,16 @@ exports.delete = (req, res) => {
     });
 };
 
+//TODO: Why isnt this working
 // Check if email already exists
 exports.checkIfExist = async (req, res) => {
-    const email = req.query.email;
-    if (!email) {
+    if (!req.query.email) {
         return res.status(400).send({
             message: "Email is required"
         });
     }
 
-    User.checkIfEmailAlreadyUsed(email, (err, data) => {
+    User.checkIfEmailAlreadyUsed(req.query.email, (err, data) => {
         if (err) {
             console.error("Error occurred while checking if email exists:", error);
             return res.status(500).send({
