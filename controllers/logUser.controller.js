@@ -21,27 +21,11 @@ exports.create = async (req, res) => {
     LogUser.create(logData, (err, data) => {
         if (err) {
             res.status(500).send({
-                message: err.message || "Some error occurred while creating the Log."
+                message: err.message || "Some error occurred while creating the User Log."
             });
         } else {
             // Return the userId of the newly created Log
             res.send({ logID: data });
-        }
-    });
-};
-
-exports.findOne = (req, res) => {
-    LogUser.findByID(req.query.userID, (err, user) => {
-        if (err) {
-            res.status(500).send({
-                message: err.message || 'An error occurred while retrieving the User Log.'
-            });
-        } else if (!user) {
-            res.status(404).send({
-                message: `User Log with ID ${req.query.userID} was not found.`
-            });
-        } else {
-            res.send(user);
         }
     });
 };

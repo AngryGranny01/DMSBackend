@@ -1,6 +1,6 @@
 const project = require("../controllers/project.controller");
 const user = require("../controllers/user.controller");
-const logProject = require("../controllers/logProject.controller")
+const log = require("../controllers/log.controller")
 const logUser = require("../controllers/logUser.controller")
 
 var app = require("express").Router();
@@ -9,6 +9,7 @@ var app = require("express").Router();
 app.post("/project", project.create);
 app.post("/user", user.create);
 app.post("/logUser", logUser.create);
+app.post("/log", log.create);
 
 //-------------------------------------------- Retrieve All--------------------------------------------------------------//
 //app.get("/theater", cinemaHall.findAll);
@@ -16,8 +17,9 @@ app.get("/user", user.findAllWithLastLogin)
 
 //-------------------------------------------- Find By ID --------------------------------------------------------------//
 //app.get("/theater/findById", cinemaHall.findOne);
-app.get("/user/findById", user.findOne);
-app.get("/logUser/findById", logUser.findOne);
+app.get("/log/findById", log.findAllByID);
+app.get("/log/findById/findProject", log.findProject);
+
 
 
 //-------------------------------------------- Update --------------------------------------------------------------//

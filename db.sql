@@ -31,13 +31,13 @@ CREATE TABLE Project (
 
 );
 
-CREATE TABLE ActivityLogProject (
-    logProjectID INT PRIMARY KEY AUTO_INCREMENT,
+CREATE TABLE ActivityLog (
+    logID INT PRIMARY KEY AUTO_INCREMENT,
     activityDescription VARCHAR(255),
     activityName VARCHAR(255),
     userID INT,
     projectID INT,
-    timeStampProject TIMESTAMP,
+    timeStampLog TIMESTAMP,
     FOREIGN KEY (userID) REFERENCES User(userID),
     FOREIGN KEY (projectID) REFERENCES Project(projectID)
 );
@@ -88,7 +88,7 @@ VALUES
     (3, 3); -- user3 assigned to Project 3
 
 -- Sample data for ActivityLogProject table
-INSERT INTO ActivityLogProject (activityDescription, activityName, userID, projectID, timeStampProject)
+INSERT INTO ActivityLog(activityDescription, activityName, userID, projectID, timeStampLog)
 VALUES 
     ('Sample activity description 1', 'Activity 1', 1, 1, NOW()),
     ('Sample activity description 2', 'Activity 2', 2, 2, NOW()),
