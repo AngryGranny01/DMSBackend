@@ -129,14 +129,15 @@ User.findByID = async (userID, result) => {
         conn = await connectionPool.promise().getConnection();
 
         // Query the database to find the user by userId
-        const [rows] = await conn.query("SELECT * FROM user WHERE userID = ?", userID);
-        let userId = rows[0].userID
+        const [rows,] = await conn.query('SELECT * FROM user WHERE userID = ?', [userID]);
+        
         // If the user is found, return it
         if (rows.length > 0) {
+            let userData = rows[0]
             let role;
             let [managerRows, managerFields] = await conn.query("SELECT COUNT(*) AS isProjectManager FROM projectmanager WHERE userID = ?", userID);
 
-            if (rows[0].isAdmin === 1) {
+            if (userData.isAdmin === 1) {
                 role = Role.ADMIN;
             } else if (managerRows[0].isProjectManager === 1) {
                 role = Role.PROJECT_MANAGER;
@@ -146,12 +147,12 @@ User.findByID = async (userID, result) => {
 
             // Create the user object
             const user = new User({
-                userID: rows[0].userID,
-                username: rows[0].userName,
-                firstname: rows[0].firstName,
-                lastname: rows[0].lastName,
-                password: rows[0].passwordHash,
-                email: rows[0].email,
+                userID: userData.userID,
+                username: userData.userName,
+                firstname: userData.firstName,
+                lastname: userData.lastName,
+                email: userData.email,
+                password: userData.passwordHash,
             }, role, "");
 
             result(null, user);
