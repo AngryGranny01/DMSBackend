@@ -9,7 +9,7 @@ exports.create = async (req, res) => {
             message: "Content can not be empty!"
         });
     }
-    const data = req.body[0]
+    const data = req.body
     // Extract user data from request body
     const userData = {
         username: data.username,
@@ -64,7 +64,7 @@ exports.findOne = (req, res) => {
     });
 };
 
-// Update a CinemaHall identified by the id in the request
+// Update a User identified by the id in the request
 exports.update = (req, res) => {
     // Validate Request
     if (!req.body) {

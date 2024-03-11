@@ -48,7 +48,7 @@ exports.findAllByID = (req, res) => {
     });
 };
 
-exports.findProject = (req, res) => {
+exports.findLogProject = (req, res) => {
     Log.findProjectLogsByID(req.query.projectID, (err, project) => {
         if (err) {
             res.status(500).send({

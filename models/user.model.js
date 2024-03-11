@@ -130,7 +130,7 @@ User.findByID = async (userID, result) => {
 
         // Query the database to find the user by userId
         const [rows,] = await conn.query('SELECT * FROM user WHERE userID = ?', [userID]);
-        
+
         // If the user is found, return it
         if (rows.length > 0) {
             let userData = rows[0]
@@ -179,7 +179,7 @@ User.updateByID = async (userData, result) => {
         await conn.beginTransaction();
 
         for (let user of userData) {
-            const { userID, username, firstname, lastname, email, password, isAdmin, isProjectManager } = user;
+            const { userID, username, firstname, lastname, email, password, isAdmin} = user;
 
             // Update the user in the database
             await conn.query(

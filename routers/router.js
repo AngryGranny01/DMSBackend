@@ -12,23 +12,28 @@ app.post("/logUser", logUser.create);
 app.post("/log", log.create);
 
 //-------------------------------------------- Retrieve All--------------------------------------------------------------//
-//app.get("/theater", cinemaHall.findAll);
 app.get("/user", user.findAllWithLastLogin)
+app.get("/project", project.findAll)
 
-//-------------------------------------------- Find By ID --------------------------------------------------------------//
-//app.get("/theater/findById", cinemaHall.findOne);
-app.get("/log/findById", log.findAllByID);
-app.get("/log/findById/findProject", log.findProject);
+//-------------------------------------------- Retrieve All By ID --------------------------------------------------------------//
+app.get("/log/userLogs", log.findAllByID);
+app.get("/project/findProject", project.findAllUserProjects);
 
+
+//-------------------------------------------- Find By One ID --------------------------------------------------------------//
+app.get("/log/findById", log.findLogProject);
+app.get("/project/findById", project.findOneProject);
 
 
 //-------------------------------------------- Update --------------------------------------------------------------//
 //app.put("/theater", cinemaHall.update);
 app.put("/user", user.update);
+app.put("/project", project.update);
 
 //-------------------------------------------- Delete --------------------------------------------------------------//
 //app.delete("/theater", cinemaHall.delete);
 app.delete("/user", user.delete);
+app.delete("/project", project.delete);
 
 //-------------------------------------------- Check If Exists --------------------------------------------------------------//
 app.get("/user/isUsed", user.checkIfExist);
