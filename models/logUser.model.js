@@ -1,4 +1,3 @@
-const { convertTimeStampToDateTime } = require("./convertDateTime");
 const { connectionPool } = require("./db");
 
 const LogUser = function (log, timeStamp) {
@@ -9,20 +8,21 @@ const LogUser = function (log, timeStamp) {
     this.timeStamp = timeStamp;
 };
 
+// Create a new LogUser entry
 LogUser.create = async (log, result) => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
         await conn.beginTransaction();
-        //add to Logs
-        const insertLogSql = 'INSERT INTO activityLogUser SET ?'
+
+        // Insert LogUser data into the database
+        const insertLogSql = 'INSERT INTO activityLogUser SET ?';
         const logData = {
             activityDescription: log.activityDescription,
             activityName: log.activityName,
             userID: log.userID,
             timeStampUser: new Date()
-        }
-        console.log(logData)
+        };
         const [rowsLog, fieldsUser] = await conn.query(insertLogSql, logData);
 
         await conn.commit();
@@ -36,9 +36,8 @@ LogUser.create = async (log, result) => {
             conn.release();
         }
     }
-}
-
+};
 
 module.exports = {
     LogUser
-}
+};

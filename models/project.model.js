@@ -1,15 +1,16 @@
 const { connectionPool } = require("./db");
-const { NiceDate } = require("./convertDateTime");
 
-const Project = function (project, time) {
+const Project = function (project, dateTime) {
     this.projectID = project.projectID;
     this.projectName = project.projectName;
-    this.projectDescription = project.projectName;
+    this.projectDescription = project.projectDescription;
     this.key = project.key;
     this.dateTime = dateTime;
 };
 
-//create new Project
+// Define functions to interact with database
+
+// Function to create a new project
 Project.create = async (newProject, result) => {
     let conn;
     try {
@@ -53,7 +54,7 @@ Project.create = async (newProject, result) => {
     }
 }
 
-//get all projects
+// Function to retrieve all projects
 Project.getAll = async (result) => {
     let conn;
     try {
@@ -79,8 +80,7 @@ Project.getAll = async (result) => {
     }
 };
 
-
-//get a specific Project
+// Function to retrieve a specific project by ID
 Project.findByID = async (projectID, result) => {
     let conn;
     try {
@@ -96,14 +96,14 @@ Project.findByID = async (projectID, result) => {
             // Query to fetch users associated with the project
             // Only necessary user info for project!
             const [userRows,] = await conn.query(`
-                SELECT u.userID, 
-                u.userName, 
-                u.firstName, 
-                u.lastName
-                FROM User u
-                INNER JOIN Project_User pu ON u.userID = pu.userID
-                WHERE pu.projectID = ?
-            `, [projectID]);
+        SELECT u.userID, 
+        u.userName, 
+        u.firstName, 
+        u.lastName
+        FROM User u
+        INNER JOIN Project_User pu ON u.userID = pu.userID
+        WHERE pu.projectID = ?
+      `, [projectID]);
 
             // Attach users data to the project object
             project.users = userRows;
@@ -124,7 +124,7 @@ Project.findByID = async (projectID, result) => {
     }
 };
 
-//get all Projects of a User
+// Function to retrieve all projects associated with a specific user
 Project.findByUserID = async (userID, result) => {
     let conn;
     try {
@@ -132,11 +132,11 @@ Project.findByUserID = async (userID, result) => {
 
         // Query the database to find projects associated with the user
         const [projectRows,] = await conn.query(`
-            SELECT p.*
-            FROM Project p
-            INNER JOIN Project_User pu ON p.projectID = pu.projectID
-            WHERE pu.userID = ?
-        `, [userID]);
+      SELECT p.*
+      FROM Project p
+      INNER JOIN Project_User pu ON p.projectID = pu.projectID
+      WHERE pu.userID = ?
+    `, [userID]);
 
         // If projects are found, return them
         if (projectRows.length > 0) {
@@ -155,9 +155,7 @@ Project.findByUserID = async (userID, result) => {
     }
 };
 
-
-
-//TODO: update
+// Function to update a project by ID
 Project.updateByID = async (projectData, result) => {
     let conn;
     try {
@@ -192,7 +190,7 @@ Project.updateByID = async (projectData, result) => {
     }
 }
 
-//TODO: delete Project 
+// Function to delete a project by ID
 Project.remove = async (projectId, result) => {
     let conn;
     try {
@@ -223,7 +221,6 @@ Project.remove = async (projectId, result) => {
     }
 }
 
-
 module.exports = {
     Project
-}
+};

@@ -1,4 +1,3 @@
-
 const DateTime = function (date) {
     this.year = date.year;
     this.month = date.month;

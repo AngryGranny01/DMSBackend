@@ -1,41 +1,39 @@
-const project = require("../controllers/project.controller");
-const user = require("../controllers/user.controller");
-const log = require("../controllers/log.controller")
-const logUser = require("../controllers/logUser.controller")
+const express = require("express");
+const projectController = require("../controllers/project.controller");
+const userController = require("../controllers/user.controller");
+const logController = require("../controllers/log.controller");
+const logUserController = require("../controllers/logUser.controller");
 
-var app = require("express").Router();
+var router = require("express").Router();
 
 //-------------------------------------------- Create --------------------------------------------------------------//
-app.post("/project", project.create);
-app.post("/user", user.create);
-app.post("/logUser", logUser.create);
-app.post("/log", log.create);
+router.post("/projects", projectController.create);
+router.post("/users", userController.create);
+router.post("/user-logs", logUserController.create);
+router.post("/logs", logController.create);
 
 //-------------------------------------------- Retrieve All--------------------------------------------------------------//
-app.get("/user", user.findAllWithLastLogin)
-app.get("/project", project.findAll)
+router.get("/users", userController.findAllWithLastLogin);
+router.get("/projects", projectController.findAll);
 
 //-------------------------------------------- Retrieve All By ID --------------------------------------------------------------//
-app.get("/log/userLogs", log.findAllByID);
-app.get("/project/findProject", project.findAllUserProjects);
+router.get("/projects/user", projectController.findAllUserProjects);
+router.get("/logs/user", logController.findUserLogs);
+router.get("/logs/project", logController.findProjectLogs);
 
-
-//-------------------------------------------- Find By One ID --------------------------------------------------------------//
-app.get("/log/findById", log.findLogProject);
-app.get("/project/findById", project.findOneProject);
-
+//-------------------------------------------- Find One By ID --------------------------------------------------------------//
+router.get("/projects/:id", projectController.findOneProject);
+router.get("/users/:id", userController.findOne);
 
 //-------------------------------------------- Update --------------------------------------------------------------//
-//app.put("/theater", cinemaHall.update);
-app.put("/user", user.update);
-app.put("/project", project.update);
+router.put("/users", userController.update);
+router.put("/projects", projectController.update);
 
 //-------------------------------------------- Delete --------------------------------------------------------------//
-//app.delete("/theater", cinemaHall.delete);
-app.delete("/user", user.delete);
-app.delete("/project", project.delete);
+router.delete("/users", userController.delete);
+router.delete("/projects", projectController.delete);
 
 //-------------------------------------------- Check If Exists --------------------------------------------------------------//
-app.get("/user/isUsed", user.checkIfExist);
+router.get("/users/exists", userController.checkIfExist);
 
-module.exports = app
+module.exports = router

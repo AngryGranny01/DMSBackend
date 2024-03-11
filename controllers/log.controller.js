@@ -1,22 +1,16 @@
-const { Log } = require("../models/log.model")
+const { Log } = require("../models/log.model");
+
 // Create a new Log
 exports.create = async (req, res) => {
     // Validate request body
-    if (!req.body) {
-        res.status(400).send({
-            message: "Content can not be empty!"
+    if (!req.body || !req.body[0]) {
+        return res.status(400).send({
+            message: "Invalid or empty request body"
         });
     }
-    const data = req.body[0]
-    // Extract user data from request body
-    const logData = {
-        activityDescription: data.description,
-        activityName: data.activityName,
-        userID: data.userID,
-        projectID: data.projectID,
-    }
 
-    console.log(logData)
+    // Extract log data from request body
+    const logData = req.body[0];
 
     // Call the create function on the Log model to save the new Log
     Log.create(logData, (err, data) => {
@@ -25,41 +19,42 @@ exports.create = async (req, res) => {
                 message: err.message || "Some error occurred while creating the Project Log."
             });
         } else {
-            // Return the userId of the newly created Log
+            // Return the logID of the newly created Log
             res.send({ logID: data });
         }
     });
 };
 
-
-exports.findAllByID = (req, res) => {
-    Log.findByID(req.query.userID, (err, user) => {
+// Find all Logs by User ID
+exports.findUserLogs = (req, res) => {
+    Log.findByID(req.query.userID, (err, userLogs) => {
         if (err) {
             res.status(500).send({
                 message: err.message || 'An error occurred while retrieving the User Log.'
             });
-        } else if (!user) {
+        } else if (!userLogs || userLogs.length === 0) {
             res.status(404).send({
                 message: `User Log with ID ${req.query.userID} was not found.`
             });
         } else {
-            res.send(user);
+            res.send(userLogs);
         }
     });
 };
 
-exports.findLogProject = (req, res) => {
-    Log.findProjectLogsByID(req.query.projectID, (err, project) => {
+// Find Project Logs by Project ID
+exports.findProjectLogs = (req, res) => {
+    Log.findProjectLogsByID(req.query.projectID, (err, projectLogs) => {
         if (err) {
             res.status(500).send({
                 message: err.message || 'An error occurred while retrieving the Project Log.'
             });
-        } else if (!project) {
+        } else if (!projectLogs || projectLogs.length === 0) {
             res.status(404).send({
                 message: `Project Log with ID ${req.query.projectID} was not found.`
             });
         } else {
-            res.send(project);
+            res.send(projectLogs);
         }
     });
 };
