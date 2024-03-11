@@ -4,103 +4,100 @@ CREATE DATABASE IF NOT EXISTS dmsproject;
 -- Use the dmsproject database
 USE dmsproject;
 
--- Create the user table
-CREATE TABLE IF NOT EXISTS user (
+CREATE TABLE User (
     userID INT PRIMARY KEY AUTO_INCREMENT,
-    userName VARCHAR(255) UNIQUE,
+    userName VARCHAR(255),
     firstName VARCHAR(255),
     lastName VARCHAR(255),
-    email VARCHAR(255),
+    email VARCHAR(255) Unique,
     passwordHash VARCHAR(255),
     isAdmin BOOLEAN
 );
 
--- Create the time table
-CREATE TABLE IF NOT EXISTS time (
-    timeID INT PRIMARY KEY AUTO_INCREMENT,
-    day INT,
-    month INT,
-    year INT,
-    hour INT,
-    minute INT
-);
-
--- Create the projectmanager table
-CREATE TABLE IF NOT EXISTS projectmanager (
-    projectManagerID INT PRIMARY KEY AUTO_INCREMENT,
+CREATE TABLE ProjectManager (
+    managerID INT PRIMARY KEY AUTO_INCREMENT,
     userID INT,
-    FOREIGN KEY (userID) REFERENCES user(userID)
+    FOREIGN KEY (userID) REFERENCES User(userID)
 );
 
--- Create the project table
-CREATE TABLE IF NOT EXISTS project (
+CREATE TABLE Project (
     projectID INT PRIMARY KEY AUTO_INCREMENT,
-    projectName VARCHAR(255),
     projectDescription VARCHAR(255),
-    projectKeyHash VARCHAR(255),
-    projectManagerID INT,
-    timeID INT,
-    FOREIGN KEY (projectManagerID) REFERENCES projectmanager(projectManagerID),
-    FOREIGN KEY (timeID) REFERENCES time(timeID)
+    projectKey VARCHAR(255),
+    projectName VARCHAR(255),
+    projectEndDate DATE,
+	managerID INT,
+    FOREIGN KEY (managerID) REFERENCES ProjectManager(managerID)
+
 );
 
--- Create the activitylog table
-CREATE TABLE IF NOT EXISTS activitylog (
-    logID INT PRIMARY KEY AUTO_INCREMENT,
-    activityName VARCHAR(255),
+CREATE TABLE ActivityLogProject (
+    logProjectID INT PRIMARY KEY AUTO_INCREMENT,
     activityDescription VARCHAR(255),
+    activityName VARCHAR(255),
     userID INT,
-    timeID INT,
-    FOREIGN KEY (userID) REFERENCES user(userID),
-    FOREIGN KEY (timeID) REFERENCES time(timeID)
-);
-
--- Create the project_user table for the many-to-many relationship between project and user
-CREATE TABLE IF NOT EXISTS project_user (
     projectID INT,
-    userID INT,
-    PRIMARY KEY (projectID, userID),
-    FOREIGN KEY (projectID) REFERENCES project(projectID),
-    FOREIGN KEY (userID) REFERENCES user(userID)
+    timeStampProject TIMESTAMP,
+    FOREIGN KEY (userID) REFERENCES User(userID),
+    FOREIGN KEY (projectID) REFERENCES Project(projectID)
 );
 
--- Insert sample data into the user table
-INSERT INTO user (userName,firstName, lastName, email, passwordHash, isAdmin)
-VALUES
-    ('OhJonny','John', 'Doe', 'john.doe@example.com', 'password123', TRUE),
-    ('jan80','Jane', 'Smith', 'jane.smith@example.com', 'abcdef', FALSE),
-    ('hackerman','Alice', 'Johnson', 'alice.johnson@example.com', '123456', FALSE);
+CREATE TABLE ActivityLogUser (
+    logUserID INT PRIMARY KEY AUTO_INCREMENT,
+    activityDescription VARCHAR(255),
+    activityName VARCHAR(255),
+    userID INT,
+    timeStampUser TIMESTAMP,
+    FOREIGN KEY (userID) REFERENCES User(userID)
+);
 
--- Insert sample data into the time table
-INSERT INTO time (day, month, year, hour, minute)
-VALUES
-    (01, 01, 2022, 12, 30),
-    (02, 02, 2022, 10, 15),
-    (03, 03 , 2022, 14, 45);
+CREATE TABLE Project_User (
+    userID INT,
+    projectID INT,
+    PRIMARY KEY (userID, projectID),
+    FOREIGN KEY (userID) REFERENCES User(userID),
+    FOREIGN KEY (projectID) REFERENCES Project(projectID)
+);
 
 
--- Insert sample data into the projectmanager table
-INSERT INTO projectmanager (userID)
-VALUES (1), (3);
+-- Sample data for User table
+INSERT INTO User (userName, firstName, lastName, email, passwordHash, isAdmin)
+VALUES 
+    ('user1', 'John', 'Doe', 'john@example.com', '123456', 0),
+    ('user2', 'Jane', 'Smith', 'jane@example.com', '654321', 1),
+    ('user3', 'Alice', 'Johnson', 'alice@example.com', '987654', 0);
 
--- Insert sample data into the project table
-INSERT INTO project (projectName, projectDescription, projectKeyHash, projectManagerID, timeID)
-VALUES
-    ('Project 1', 'Description 1', 'hash1', 1, 1),
-    ('Project 2', 'Description 2', 'hash2', 2, 2),
-    ('Project 3', 'Description 3', 'hash3', 1, 3);
+-- Sample data for ProjectManager table
+INSERT INTO ProjectManager (userID)
+VALUES 
+    (2),
+    (3);
 
--- Insert sample data into the activitylog table
-INSERT INTO activitylog (activityName, activityDescription, userID, timeID)
-VALUES
-    ('LOGIN', 'qwdqdqdqwdqwdqwdqwd', 1, 1),
-    ('LOGIN', 'sdaasdasdfasfasfasf', 2, 2),
-    ('CREATED', 'sagsagdgadgagagD', 1, 3);
+-- Sample data for Project table
+INSERT INTO Project (projectDescription, projectKey, projectName, projectEndDate, managerID)
+VALUES 
+    ('Sample project 1 description', '1234', 'Project 1', '2024-03-15', 1),
+    ('Sample project 2 description', '5678', 'Project 2', '2024-04-20', 2),
+    ('Sample project 3 description', '9876', 'Project 3', '2024-05-25', 1);
 
--- Insert sample data into the project_user table
-INSERT INTO project_user (projectID, userID)
-VALUES
-    (1, 1),
-    (2, 1),
-    (2, 2),
-    (3, 3);
+-- Sample data for Project_User table
+INSERT INTO Project_User (userID, projectID)
+VALUES 
+    (1, 1), -- user1 assigned to Project 1
+    (2, 2), -- user2 assigned to Project 2
+    (3, 3); -- user3 assigned to Project 3
+
+-- Sample data for ActivityLogProject table
+INSERT INTO ActivityLogProject (activityDescription, activityName, userID, projectID, timeStampProject)
+VALUES 
+    ('Sample activity description 1', 'Activity 1', 1, 1, NOW()),
+    ('Sample activity description 2', 'Activity 2', 2, 2, NOW()),
+    ('Sample activity description 3', 'Activity 3', 3, 3, NOW());
+
+-- Sample data for ActivityLogUser table
+INSERT INTO ActivityLogUser (activityDescription, activityName, userID, timeStampUser)
+VALUES 
+    ('Sample activity description 4', 'CREATED', 1, NOW()),
+    ('Sample activity description 5', 'LOGIN', 2, NOW()),
+    ('Sample activity description 6', 'LOGIN', 3, NOW());
+

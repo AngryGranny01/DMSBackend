@@ -1,8 +1,8 @@
 const { Project } = require("../models/project.model");
-const { DateTime } = require("../models/dateTime");
+const { DateTime } = require("../models/convertDateTime");
 
 exports.create = async (req, res) => {
-    if (!req.body) {
+  if (!req.body) {
     res.status(400).send({
       message: "Content can not be empty!"
     });
@@ -21,7 +21,7 @@ exports.create = async (req, res) => {
     scheduleDateTime: dateJSON
   }
   console.log(project)
-  
+
   Project.create(project, (err, data) => {
     if (err)
       res.status(500).send({

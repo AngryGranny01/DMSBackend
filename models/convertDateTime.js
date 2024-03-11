@@ -8,6 +8,17 @@ const DateTime = function (date) {
 }
 
 
+const convertTimeStampToDateTime = (timeStamp)=>{
+    const date = {
+        year: timeStamp.getFullYear(),
+        month: timeStamp.getMonth() + 1, // Adding 1 because getMonth() returns zero-based month index
+        day: timeStamp.getDate(),
+        hour: timeStamp.getHours(),
+        minute: timeStamp.getMinutes(),
+    }
+    return new DateTime(date);
+}
+
 const findNewestDate = (dates) => {
     if (dates.length === 0) return null;
 
@@ -39,4 +50,4 @@ const calculateNumericDate = (dateTime) => {
     return dateTime.year * 100000000 + dateTime.month * 1000000 + dateTime.day * 10000 + dateTime.hour * 100 + dateTime.minute;
 };
 
-module.exports = { DateTime, findNewestDate };
+module.exports = { DateTime, findNewestDate, convertTimeStampToDateTime};

@@ -1,6 +1,6 @@
 const { connectionPool } = require("./db");
 const { Role } = require("./role");
-const { findNewestDate } = require('./dateTime');
+const { findNewestDate } = require('./convertDateTime');
 
 const User = function (user, role, lastLogin) {
     this.userID = user.userID;
@@ -13,11 +13,7 @@ const User = function (user, role, lastLogin) {
     this.lastLogin = lastLogin;
 };
 
-/**
- * TODO:
- * Neue Benutzer erstellen Methode überarbeiten
- * Delete Methode frage noch ungeklärt siehe Note!
- */
+
 User.create = async (newUser, result) => {
     let conn;
     try {
@@ -33,14 +29,17 @@ User.create = async (newUser, result) => {
             passwordHash: newUser.password,
             isAdmin: newUser.isAdmin,
         }
-        await conn.query(insertUserSql, userData);
+        console.log(userData)
+        const [rowsUser, fieldsUser] = await conn.query(insertUserSql, userData);
 
-        //add to Logs
-        //add to ProjectManager if ProjectManager
-
+        // Check if the user is a project manager
+        if (newUser.isProjectManager === true) {
+            // Execute the query to insert the user as a project manager
+            await conn.query('INSERT INTO ProjectManager (userID) VALUES (?)', [rowsUser.insertId]);
+        }
 
         await conn.commit();
-        result(null, { id: rows.insertId });
+        result(null, { id: rowsUser.insertId });
     } catch (error) {
         await conn.rollback();
         console.error("Error occurred while inserting a new User: ", error);
@@ -81,13 +80,18 @@ User.getAllUsersWithLastLoginDate = async (result) => {
 
             // Query the last login date for the current user
             const selectLastLoginSql = `
-                            SELECT t.day, t.month, t.year, t.hour, t.minute
-                            FROM activitylog AS al
-                            JOIN time AS t ON al.timeID = t.timeID
-                            WHERE al.userID = ?
-                            AND (al.activityName = 'LOGIN' OR al.activityName = 'CREATED')
-                            ORDER BY t.year DESC, t.month DESC, t.day DESC, t.hour DESC, t.minute DESC
-                            LIMIT 1`;
+            SELECT DISTINCT
+                HOUR(timeStampUser) AS hour,
+                MONTH(timeStampUser) AS month,
+                YEAR(timeStampUser) AS year,
+                MINUTE(timeStampUser) AS minute,
+                DAY(timeStampUser) AS day
+            FROM 
+                ActivityLogUser
+            WHERE 
+                userID = ? 
+                AND (activityName = 'LOGIN' OR activityName = 'CREATED')
+            `;
 
             let [logRows, logFields] = await conn.query(selectLastLoginSql, userRow.userID);
 
@@ -119,18 +123,18 @@ User.getAllUsersWithLastLoginDate = async (result) => {
 }
 
 
-User.findByID = async (username, result) => {
+User.findByID = async (userID, result) => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
 
         // Query the database to find the user by userId
-        const [rows] = await conn.query("SELECT * FROM user WHERE userName = ?", username);
+        const [rows] = await conn.query("SELECT * FROM user WHERE userID = ?", userID);
         let userId = rows[0].userID
         // If the user is found, return it
         if (rows.length > 0) {
             let role;
-            let [managerRows, managerFields] = await conn.query("SELECT COUNT(*) AS isProjectManager FROM projectmanager WHERE userID = ?", userId);
+            let [managerRows, managerFields] = await conn.query("SELECT COUNT(*) AS isProjectManager FROM projectmanager WHERE userID = ?", userID);
 
             if (rows[0].isAdmin === 1) {
                 role = Role.ADMIN;
@@ -153,7 +157,7 @@ User.findByID = async (username, result) => {
             result(null, user);
         } else {
             // User not found
-            result({ message: `User with ID ${userId} not found` }, null);
+            result({ message: `User with ID ${userID} not found` }, null);
         }
     } catch (error) {
         console.error("Error retrieving user from database:", error);
@@ -225,11 +229,12 @@ User.remove = async (userID, result) => {
         conn = await connectionPool.promise().getConnection();
         await conn.beginTransaction();
 
+        // Delete user from activitylog table
+        await conn.query("DELETE FROM activitylogProject WHERE userID = ?", userID);
+        await conn.query("DELETE FROM activitylogUser WHERE userID = ?", userID);
+
         // Delete user from project_user table
         await conn.query("DELETE FROM project_user WHERE userID = ?", userID);
-
-        // Delete user from activitylog table
-        await conn.query("DELETE FROM activitylog WHERE userID = ?", userID);
 
         // Delete user from projectmanager table
         await conn.query("DELETE FROM projectmanager WHERE userID = ?", userID);
@@ -250,12 +255,13 @@ User.remove = async (userID, result) => {
     }
 }
 
-User.checkIfUsernameAlreadyUsed = async (username, result) => {
+
+User.checkIfEmailAlreadyUsed = async (email, result) => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
-        const query = "SELECT * FROM user WHERE userName = ?";
-        const [rows, fields] = await conn.query(query, username);
+        const query = "SELECT * FROM user WHERE email = ?";
+        const [rows, fields] = await conn.query(query, email);
         conn.release();
         if (rows.length === 0) {
             result(null, { exist: false })

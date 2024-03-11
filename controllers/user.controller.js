@@ -9,40 +9,26 @@ exports.create = async (req, res) => {
             message: "Content can not be empty!"
         });
     }
-
-    // Extract movie data from request body
+    const data = req.body[0]
+    // Extract user data from request body
     const userData = {
-        userID: 0,
-        username: req.body.username,
-        firstname: req.body.firstname,
-        lastname: req.body.lastname,
-        email: req.body.email,
-        password: req.body.password,
+        username: data.username,
+        firstname: data.firstname,
+        lastname: data.lastname,
+        email: data.email,
+        password: data.password,
+        isAdmin: data.isAdmin,
+        isProjectManager: data.isProjectManager
     }
-    let role;
-    if (req.body.isAdmin) {
-        role = Role.ADMIN
-    } else if (req.body.isProjectManager) {
-        role = Role.PROJECT_MANAGER
-    } else {
-        role = Role.USER
-    }
-
-    let lastLogin
-    // Extract logs from request body
-    // Extract role.
-
-    // Create a new movie instance with the extracted data and ratings
-    const movie = new Movie(movieData, role, lastLogin);
 
     // Call the create function on the Movie model to save the new movie
-    Movie.create(movie, (err, data) => {
+    User.create(userData, (err, data) => {
         if (err) {
             res.status(500).send({
                 message: err.message || "Some error occurred while creating the Movie."
             });
         } else {
-            // Return the userId of the newly created movie
+            // Return the userId of the newly created user
             res.send({ userID: data });
         }
     });
@@ -63,14 +49,14 @@ exports.findAllWithLastLogin = (req, res) => {
 
 
 exports.findOne = (req, res) => {
-    User.findByID(req.query.username, (err, user) => {
+    User.findByID(req.query.userID, (err, user) => {
         if (err) {
             res.status(500).send({
                 message: err.message || 'An error occurred while retrieving the User.'
             });
         } else if (!user) {
             res.status(404).send({
-                message: `User with ID ${req.query.userId} was not found.`
+                message: `User with ID ${req.query.userID} was not found.`
             });
         } else {
             res.send(user);
@@ -130,16 +116,16 @@ exports.delete = (req, res) => {
 
 
 exports.checkIfExist = async (req, res) => {
-    const username = req.query.username;
-    if (!username) {
+    const email = req.query.email;
+    if (!email) {
         return res.status(400).send({
-            message: "Username is required"
+            message: "Email is required"
         });
     }
 
-    User.checkIfUsernameAlreadyUsed(username, (err, data) => {
+    User.checkIfEmailAlreadyUsed(email, (err, data) => {
         if (err) {
-            console.error("Error occurred while checking if username exists:", error);
+            console.error("Error occurred while checking if email exists:", error);
             res.status(500).send({
                 message: "Some error occurred while checking if the User exists."
             });

@@ -1,5 +1,5 @@
 const { connectionPool } = require("./db");
-const { NiceDate } = require("../models/dateTime");
+const { NiceDate } = require("./convertDateTime");
 
 const Project = function (project, time) {
     this.projectID = project.projectID;
@@ -8,6 +8,8 @@ const Project = function (project, time) {
     this.key = project.key;
     this.dateTime = dateTime;
 };
+
+//TODO: Create, getAll, getByProjectID, delete, update
 
 Project.create = async (newProject, result) => {
     let conn;
@@ -29,7 +31,7 @@ Project.getAllWithKey = async (key, result) => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
-        const [rows, fields] = await conn.query("SELECT From project where key = ?", newSchedule)
+        const [rows, fields] = await conn.query("SELECT From project where projectKey = ?", newSchedule)
 
         const projects = rows.map(row => {
             const dateTime = DateTime.convertToJson(row.dateTime);
