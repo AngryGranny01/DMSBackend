@@ -109,7 +109,7 @@ exports.delete = (req, res) => {
     });
 };
 
-//TODO: Why isnt this working
+
 // Check if email already exists
 exports.checkIfExist = async (req, res) => {
     if (!req.query.email) {
