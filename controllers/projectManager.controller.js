@@ -13,14 +13,14 @@ exports.update = (req, res) => {
         if (err) {
             console.error(err);
             return res.status(500).send({
-                message: "Error updating User with id " + req.query.userID
+                message: "Error updating Projects with Project Manager ID " + req.query.userID
             });
         } else if (!data || data.affectedRows === 0) {
             return res.status(404).send({
-                message: `User with id ${req.query.userID} not found.`
+                message: `Projects with Project Manager ID ${req.query.userID} not found.`
             });
         } else {
-            res.send({ message: `User with id ${req.query.userID} was updated successfully!` });
+            res.send({ message: `Projects with Project Manager ID ${req.query.userID} was updated successfully!` });
         }
     });
 };

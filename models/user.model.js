@@ -32,8 +32,8 @@ User.create = async (newUser, result) => {
         };
         const [rowsUser, fieldsUser] = await conn.query(insertUserSql, userData);
 
-        // Check if the user is a project manager
-        if (newUser.isProjectManager === true) {
+        // Check if the user is a project manager or Admin
+        if (newUser.isProjectManager === true || newUser.isAdmin === true) {
             // Insert the user as a project manager
             await conn.query('INSERT INTO ProjectManager (userID) VALUES (?)', [rowsUser.insertId]);
         }
