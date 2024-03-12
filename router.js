@@ -2,6 +2,7 @@ const projectController = require("./controllers/project.controller");
 const userController = require("./controllers/user.controller");
 const logController = require("./controllers/log.controller");
 const logUserController = require("./controllers/logUser.controller");
+const projectManagerController = require("./controllers/projectManager.controller");
 
 var router = require("express").Router();
 
@@ -23,10 +24,13 @@ router.get("/logs/project", logController.findProjectLogs);
 //-------------------------------------------- Find One By ID --------------------------------------------------------------//
 router.get("/projects/:id", projectController.findOneProject);
 router.get("/users/:id", userController.findOne);
+router.get("/projectManager/:id", projectManagerController.findManagerID);
+
 
 //-------------------------------------------- Update --------------------------------------------------------------//
 router.put("/users", userController.update);
 router.put("/projects", projectController.update);
+router.put("/projectManager", projectManagerController.update)
 
 //-------------------------------------------- Delete --------------------------------------------------------------//
 router.delete("/users", userController.delete);

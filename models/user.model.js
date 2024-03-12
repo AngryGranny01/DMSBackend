@@ -145,6 +145,26 @@ User.findByID = async (userID, result) => {
                 role = Role.USER;
             }
 
+            // Query the last login date for the current user
+            const selectLastLoginSql = `
+            SELECT DISTINCT
+                HOUR(timeStampUser) AS hour,
+                MONTH(timeStampUser) AS month,
+                YEAR(timeStampUser) AS year,
+                MINUTE(timeStampUser) AS minute,
+                DAY(timeStampUser) AS day
+            FROM 
+                ActivityLogUser
+            WHERE 
+                userID = ? 
+                AND (activityName = 'LOGIN' OR activityName = 'CREATED')
+            `;
+
+            let [logRows, logFields] = await conn.query(selectLastLoginSql, userID);
+
+            // Extract last login date
+            const lastLogin = findNewestDate(logRows);
+
             // Create the user object
             const user = new User({
                 userID: userData.userID,
@@ -153,7 +173,7 @@ User.findByID = async (userID, result) => {
                 lastname: userData.lastName,
                 email: userData.email,
                 password: userData.passwordHash,
-            }, role, "");
+            }, role, lastLogin);
 
             result(null, user);
         } else {
@@ -230,7 +250,7 @@ User.remove = async (userID, result) => {
         await conn.beginTransaction();
 
         // Delete user from activitylog table
-        await conn.query("DELETE FROM activitylogProject WHERE userID = ?", userID);
+        await conn.query("DELETE FROM activitylog WHERE userID = ?", userID);
         await conn.query("DELETE FROM activitylogUser WHERE userID = ?", userID);
 
         // Delete user from project_user table
@@ -269,7 +289,7 @@ User.checkIfEmailAlreadyUsed = async (email, result) => {
         }
     } catch (err) {
         result(err, null);
-    }finally {
+    } finally {
         if (conn) {
             conn.release();
         }
