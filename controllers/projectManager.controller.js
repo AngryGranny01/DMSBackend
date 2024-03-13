@@ -41,3 +41,23 @@ exports.findManagerID = (req, res) => {
         }
     });
 };
+
+// Delete a User by ID
+exports.delete = (req, res) => {
+    // Call the remove method of the User model with the userId query parameter
+    ProjectManager.remove(req.query.managerID, (err, data) => {
+        if (err) {
+            if (err.kind === "not_found") {
+                return res.status(404).send({
+                    message: `Project Manager not found.`,
+                });
+            } else {
+                return res.status(500).send({
+                    message: `Could not delete Project Manager`,
+                });
+            }
+        } else {
+            res.send({ message: "User was deleted successfully!" });
+        }
+    });
+};

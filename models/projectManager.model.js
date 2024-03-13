@@ -62,6 +62,28 @@ ProjectManager.getProjectManagerIDByUserID = async (userID, result) => {
     }
 };
 
+ProjectManager.remove = async (managerID, result)=> {
+    let conn;
+    try {
+        conn = await connectionPool.promise().getConnection();
+        await conn.beginTransaction();
+        console.log("Im Called")
+        console.log(managerID)
+
+        const [deleteResult] = await conn.query("DELETE FROM ProjectManager WHERE managerID = ?", managerID);
+
+        await conn.commit();
+        result(null, deleteResult.affectedRows);
+    } catch (error) {
+        console.error("Error occurred while deleting the Project Manager: ", error);
+        await conn.rollback();
+        result(error, null);
+    } finally {
+        if (conn) {
+            conn.release();
+        }
+    }  
+}
 
 module.exports = {
     ProjectManager

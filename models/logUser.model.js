@@ -1,11 +1,13 @@
 const { connectionPool } = require("./db");
 
-const LogUser = function (log, timeStamp) {
+const LogUser = function (log, timeStamp, user) {
     this.logUserID = log.logUserID;
     this.userID = log.userID;
     this.activityDescription = log.activityDescription;
     this.activityName = log.activityName;
     this.timeStamp = timeStamp;
+    this.firstName = user.firstName;
+    this.lastName = user.lastName;
 };
 
 // Create a new LogUser entry

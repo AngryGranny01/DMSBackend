@@ -4,7 +4,7 @@ class Role {
     }
 
     static get PROJECT_MANAGER() {
-        return "project manager";
+        return "projectManager";
     }
 
     static get ADMIN() {

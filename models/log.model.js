@@ -1,13 +1,15 @@
 const { connectionPool } = require("./db");
 const { convertTimeStampToDateTime } = require("./convertDateTime");
 
-const Log = function (log, timeStamp) {
+const Log = function (log, timeStamp, user) {
     this.logID = log.logID;
     this.projectID = log.projectID;
     this.userID = log.userID;
     this.activityDescription = log.activityDescription;
     this.activityName = log.activityName;
     this.timeStamp = timeStamp;
+    this.firstName = user.firstName;
+    this.lastName = user.lastName;
 };
 
 // Create a new Log entry
@@ -58,15 +60,25 @@ Log.findProjectLogsByID = async (projectID, result) => {
 
         // Process log data
         for (let logRow of logRows) {
-            let date = convertTimeStampToDateTime(logRow.timeStampLog);
-            const log = new Log({
-                logID: logRow.logID,
-                userID: logRow.userID,
-                projectID: logRow.projectID,
-                activityName: logRow.activityName,
-                activityDescription: logRow.activityDescription,
-            }, date);
-            projectLogs.push(log);
+            let timeStamp = convertTimeStampToDateTime(logRow.timeStamp);
+            let [userRows] = await conn.query("Select firstName, lastName from User where userID = ?", logRow.userID);
+            if (userRows.length > 0) {
+                let user = userRows[0];
+                const log = {
+                    logUserID: logRow.logID,
+                    projectID: logRow.projectID,
+                    userID: logRow.userID,
+                    activityName: logRow.activityName,
+                    activityDescription: logRow.activityDescription,
+                    timeStamp: timeStamp,
+                    firstName: user.firstName,
+                    lastName: user.lastName
+                };
+                projectLogs.push(log);
+            }else {
+                // Handle case where user is not found
+                console.error(`User with userID ${logRow.userID} not found.`);
+            }
         }
 
         result(null, projectLogs);
@@ -114,15 +126,26 @@ Log.findByID = async (userID, result) => {
 
         // Process log data
         for (let logRow of logRows) {
-            let dateTime = convertTimeStampToDateTime(logRow.timeStamp);
-            const log = new Log({
-                logUserID: logRow.logID,
-                projectID: logRow.projectID,
-                userID: logRow.userID,
-                activityName: logRow.activityName,
-                activityDescription: logRow.activityDescription,
-            }, dateTime);
-            usersLog.push(log);
+            let timeStamp = convertTimeStampToDateTime(logRow.timeStamp);
+            let [userRows] = await conn.query("Select firstName, lastName from User where userID = ?", logRow.userID);
+            if (userRows.length > 0) {
+                let user = userRows[0];
+                const log = {
+                    logUserID: logRow.logID,
+                    projectID: logRow.projectID,
+                    userID: logRow.userID,
+                    activityName: logRow.activityName,
+                    activityDescription: logRow.activityDescription,
+                    timeStamp: timeStamp,
+                    firstName: user.firstName,
+                    lastName: user.lastName
+                };
+                usersLog.push(log);
+            }else {
+                // Handle case where user is not found
+                console.error(`User with userID ${logRow.userID} not found.`);
+            }
+            
         }
 
         result(null, usersLog);

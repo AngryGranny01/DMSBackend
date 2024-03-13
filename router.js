@@ -35,6 +35,7 @@ router.put("/projectManager", projectManagerController.update)
 //-------------------------------------------- Delete --------------------------------------------------------------//
 router.delete("/users", userController.delete);
 router.delete("/projects", projectController.delete);
+router.delete("/projectManager", projectManagerController.delete);
 
 //-------------------------------------------- Check If Exists --------------------------------------------------------------//
 router.get("/user/exist", userController.checkIfExist);

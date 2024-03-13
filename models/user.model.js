@@ -15,25 +15,18 @@ const User = function (user, role, lastLogin) {
 };
 
 // Function to create a new user
-User.create = async (newUser, result) => {
+User.create = async (userData,isProjectManager, result) => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
         await conn.beginTransaction();
 
         const insertUserSql = 'INSERT INTO user SET ?';
-        const userData = {
-            userName: newUser.username,
-            firstName: newUser.firstname,
-            lastName: newUser.lastname,
-            email: newUser.email,
-            passwordHash: newUser.password,
-            isAdmin: newUser.isAdmin,
-        };
+
         const [rowsUser, fieldsUser] = await conn.query(insertUserSql, userData);
 
         // Check if the user is a project manager or Admin
-        if (newUser.isProjectManager === true || newUser.isAdmin === true) {
+        if (isProjectManager === true || userData.isAdmin === true) {
             // Insert the user as a project manager
             await conn.query('INSERT INTO ProjectManager (userID) VALUES (?)', [rowsUser.insertId]);
         }
@@ -157,7 +150,7 @@ User.findByID = async (userID, result) => {
                 ActivityLogUser
             WHERE 
                 userID = ? 
-                AND (activityName = 'LOGIN' OR activityName = 'CREATED')
+                AND (activityName = '${ActivityName.LOGIN}' OR activityName = '${ActivityName.CREATE_USER}')
             `;
 
             let [logRows, logFields] = await conn.query(selectLastLoginSql, userID);
@@ -191,20 +184,18 @@ User.findByID = async (userID, result) => {
 };
 
 // Function to update user by ID
-User.updateByID = async (userData, result) => {
+User.updateByID = async (user, result) => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
         await conn.beginTransaction();
 
-        for (let user of userData) {
-            const { userID, username, firstname, lastname, email, password, isAdmin } = user;
-
-            // Update the user in the database
-            await conn.query(
-                `UPDATE user 
+        let isAdmin = user.role === Role.ADMIN ? true : false;
+        // Update the user in the database
+        await conn.query(
+            `UPDATE user 
                 SET 
-                    username = ?, 
+                    userName = ?, 
                     firstName = ?, 
                     lastName = ?, 
                     email = ?, 
@@ -212,23 +203,23 @@ User.updateByID = async (userData, result) => {
                     isAdmin = ? 
                 WHERE 
                     userID = ?;`,
-                [username, firstname, lastname, email, password, isAdmin, userID]
-            );
+            [user.userName, user.firstName, user.lastName, user.email, user.passwordHash, isAdmin, user.userID]
+        );
 
-            // Check if the user is a project manager
-            if (user.isProjectManager === true) {
-                // Check if the user is already in the projectmanager table
-                const [managerRows] = await conn.query("SELECT * FROM projectmanager WHERE userID = ?", user.userID);
+        // Check if the user is a project manager
+        if (user.role === Role.PROJECT_MANAGER || user.role === Role.ADMIN) {
+            // Check if the user is already in the projectmanager table
+            const [managerRows] = await conn.query("SELECT * FROM projectmanager WHERE userID = ?", user.userID);
 
-                // If not, insert the user into the projectmanager table
-                if (managerRows.length === 0) {
-                    await conn.query("INSERT INTO projectmanager (userID) VALUES (?)", [user.userID]);
-                    console.log("User successfully added as a project manager.");
-                } else {
-                    console.log("User is already a project manager.");
-                }
+            // If not, insert the user into the projectmanager table
+            if (managerRows.length === 0) {
+                await conn.query("INSERT INTO projectmanager (userID) VALUES (?)", [user.userID]);
+                console.log("User successfully added as a project manager.");
+            } else {
+                console.log("User is already a project manager.");
             }
         }
+
         await conn.commit();
         result(null, "Users updated successfully");
     } catch (error) {

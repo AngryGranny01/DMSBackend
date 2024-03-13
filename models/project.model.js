@@ -95,14 +95,14 @@ Project.findByID = async (projectID, result) => {
             // Query to fetch users associated with the project
             // Only necessary user info for project!
             const [userRows,] = await conn.query(`
-        SELECT u.userID, 
-        u.userName, 
-        u.firstName, 
-        u.lastName
-        FROM User u
-        INNER JOIN Project_User pu ON u.userID = pu.userID
-        WHERE pu.projectID = ?
-      `, [projectID]);
+            SELECT u.userID, 
+            u.userName, 
+            u.firstName, 
+            u.lastName
+            FROM User u
+            INNER JOIN Project_User pu ON u.userID = pu.userID
+            WHERE pu.projectID = ?
+        `, [projectID]);
 
             // Attach users data to the project object
             project.users = userRows;

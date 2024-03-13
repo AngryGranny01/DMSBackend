@@ -9,20 +9,18 @@ exports.create = async (req, res) => {
         });
     }
 
-    const data = req.body;
-    // Extract user data from request body
     const userData = {
-        username: data.username,
-        firstname: data.firstname,
-        lastname: data.lastname,
-        email: data.email,
-        password: data.password,
-        isAdmin: data.isAdmin,
-        isProjectManager: data.isProjectManager
-    };
+        userName: req.body.userName,
+        firstName: req.body.firstName,
+        lastName: req.body.lastName,
+        email: req.body.email,
+        passwordHash: req.body.passwordHash,
+        isAdmin: req.body.isAdmin
+    }
+    console.log(req.body)
 
     // Call the create function on the User model to save the new user
-    User.create(userData, (err, data) => {
+    User.create(userData,req.body.isProjectManager, (err, data) => {
         if (err) {
             return res.status(500).send({
                 message: err.message || "Some error occurred while creating the User."
@@ -77,14 +75,14 @@ exports.update = (req, res) => {
         if (err) {
             console.error(err);
             return res.status(500).send({
-                message: "Error updating User with id " + req.body[0].userID
+                message: "Error updating User with id " + req.body.userID
             });
         } else if (!data || data.affectedRows === 0) {
             return res.status(404).send({
-                message: `User with id ${req.body[0].userID} not found.`
+                message: `User with id ${req.body.userID} not found.`
             });
         } else {
-            res.send({ message: `User with id ${req.body[0].userID} was updated successfully!` });
+            res.send({ message: `User with id ${req.body.userID} was updated successfully!` });
         }
     });
 };
@@ -117,7 +115,7 @@ exports.checkIfExist = async (req, res) => {
             message: "Email is required"
         });
     }
-
+    
     User.checkIfEmailAlreadyUsed(req.query.email, (err, data) => {
         if (err) {
             console.error("Error occurred while checking if email exists:", error);
