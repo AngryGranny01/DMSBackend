@@ -17,7 +17,6 @@ exports.create = async (req, res) => {
         passwordHash: req.body.passwordHash,
         isAdmin: req.body.isAdmin
     }
-    console.log(req.body)
 
     // Call the create function on the User model to save the new user
     User.create(userData,req.body.isProjectManager, (err, data) => {
@@ -118,7 +117,27 @@ exports.checkIfExist = async (req, res) => {
     
     User.checkIfEmailAlreadyUsed(req.query.email, (err, data) => {
         if (err) {
-            console.error("Error occurred while checking if email exists:", error);
+            console.error("Error occurred while checking if email exists:", err);
+            return res.status(500).send({
+                message: "Some error occurred while checking if the User exists."
+            });
+        } else {
+            res.send(data);
+        }
+    });
+};
+
+// Check if email already exists
+exports.checkLogin = async (req, res) => {
+    if (!req.query.email || !req.query.passwordHash) {
+        return res.status(400).send({
+            message: "Email is required"
+        });
+    }
+    
+    User.checkEmailAndPassword(req.query.email, req.query.passwordHash,(err, data) => {
+        if (err) {
+            console.error("Error occurred while checking for Email and Password exists:", err);
             return res.status(500).send({
                 message: "Some error occurred while checking if the User exists."
             });

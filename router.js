@@ -6,11 +6,14 @@ const projectManagerController = require("./controllers/projectManager.controlle
 
 var router = require("express").Router();
 
+//-------------------------------------------- Login --------------------------------------------------------------//
+router.get("/user/login", userController.checkLogin);
+
 //-------------------------------------------- Create --------------------------------------------------------------//
 router.post("/projects", projectController.create);
 router.post("/users", userController.create);
 router.post("/user-logs", logUserController.create);
-router.post("/logs", logController.create);
+router.post("/project-logs", logController.create);
 
 //-------------------------------------------- Retrieve All--------------------------------------------------------------//
 router.get("/users", userController.findAllWithLastLogin);

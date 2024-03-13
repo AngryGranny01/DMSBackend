@@ -1,6 +1,7 @@
 const { connectionPool } = require("./db");
 const { Role } = require("./role");
 const { findNewestDate } = require('./convertDateTime');
+const { ActivityName } = require('./activityName');
 
 // User model definition
 const User = function (user, role, lastLogin) {
@@ -15,7 +16,7 @@ const User = function (user, role, lastLogin) {
 };
 
 // Function to create a new user
-User.create = async (userData,isProjectManager, result) => {
+User.create = async (userData, isProjectManager, result) => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
@@ -286,6 +287,68 @@ User.checkIfEmailAlreadyUsed = async (email, result) => {
         }
     }
 };
+
+User.checkEmailAndPassword = async (email, password, result) => {
+    let conn;
+    try {
+        conn = await connectionPool.promise().getConnection();
+        const query = "SELECT * FROM user WHERE email = ? AND passwordHash = ?";
+        const [rows, fields] = await conn.query(query, [email, password]);
+        if (rows.length === 0) {
+            result(null, {});
+        } else {
+            let userData = rows[0]
+            // Determine user's role
+            let role;
+            let [managerRows, managerFields] = await conn.query("SELECT COUNT(*) AS isProjectManager FROM projectmanager WHERE userID = ?", userData.userID);
+            if (userData.isAdmin === 1) {
+                role = Role.ADMIN;
+            } else if (managerRows[0].isProjectManager === 1) {
+                role = Role.PROJECT_MANAGER;
+            } else {
+                role = Role.USER;
+            }
+
+            // Query the last login date for the current user
+            const selectLastLoginSql = `
+            SELECT DISTINCT
+              HOUR(timeStampUser) AS hour,
+              MONTH(timeStampUser) AS month,
+              YEAR(timeStampUser) AS year,
+              MINUTE(timeStampUser) AS minute,
+              DAY(timeStampUser) AS day
+            FROM 
+              ActivityLogUser
+            WHERE 
+              userID = ? 
+              AND (activityName = '${ActivityName.LOGIN}' OR activityName = '${ActivityName.CREATE_USER}')
+          `;
+
+            let [logRows, logFields] = await conn.query(selectLastLoginSql, userData.userID);
+
+            // Extract last login date
+            const lastLogin = findNewestDate(logRows);
+
+            // Create the user object
+            const user = new User({
+                userID: userData.userID,
+                username: userData.userName,
+                firstname: userData.firstName,
+                lastname: userData.lastName,
+                email: userData.email,
+                password: userData.passwordHash,
+            }, role, lastLogin);
+            result(null, user);
+        }
+    } catch (err) {
+        result(err, null);
+    } finally {
+        if (conn) {
+            conn.release();
+        }
+    }
+};
+
 
 module.exports = {
     User

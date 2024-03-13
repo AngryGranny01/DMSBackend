@@ -16,7 +16,7 @@ LogUser.create = async (log, result) => {
     try {
         conn = await connectionPool.promise().getConnection();
         await conn.beginTransaction();
-
+        console.log(log)
         // Insert LogUser data into the database
         const insertLogSql = 'INSERT INTO activityLogUser SET ?';
         const logData = {
