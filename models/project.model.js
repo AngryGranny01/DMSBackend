@@ -1,4 +1,5 @@
 const { connectionPool } = require("./db");
+const { Role } = require("./role");
 
 const Project = function (project, dateTime) {
     this.projectID = project.projectID;
@@ -58,15 +59,29 @@ Project.getAll = async (result) => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
-
-        // Query the database to get all projects
+        const projects = [];
         const [projectRows,] = await conn.query('SELECT * FROM Project');
-
-        // If projects are found, return them
         if (projectRows.length > 0) {
-            result(null, projectRows);
+            for (const projectRow of projectRows) {
+                const [projectManager,] = await conn.query('SELECT userID FROM ProjectManager where managerID=?', projectRow.managerID);
+                const [projectManagerUser,] = await conn.query('SELECT userID, userName, firstName, lastName FROM User where userID=?', projectManager[0].userID);
+                const [projectUserRows,] = await conn.query('SELECT userID FROM Project_User where projectID=?', projectRow.projectID);
+                let users = await Project.getProjectUsers(projectUserRows);
+
+                const project = {
+                    projectID: projectRow.projectID,
+                    projectName: projectRow.projectName,
+                    description: projectRow.projectName,
+                    key: projectRow.projectName,
+                    endDate: projectRow.projectEndDate,
+                    managerID: projectRow.managerID,
+                    manager: projectManagerUser,
+                    users: users,
+                };
+                projects.push(project);
+            }
+            result(null, projects);
         } else {
-            // No projects found
             result({ message: "No projects found" }, null);
         }
     } catch (error) {
@@ -79,6 +94,7 @@ Project.getAll = async (result) => {
     }
 };
 
+
 // Function to retrieve a specific project by ID
 Project.findByID = async (projectID, result) => {
     let conn;
@@ -90,22 +106,22 @@ Project.findByID = async (projectID, result) => {
 
         // If the project is found, proceed to fetch users associated with the project
         if (projectRows.length > 0) {
-            const project = projectRows[0]; // Retrieve the project data
+            const projectData = projectRows[0]; // Retrieve the project data
+            const [projectManager,] = await conn.query('SELECT userID FROM ProjectManager where managerID=?', projectData.managerID);
+            const [projectManagerUser,] = await conn.query('SELECT userID, userName, firstName, lastName FROM User where userID=?', projectManager[0].userID);
+            const [projectUserRows,] = await conn.query('SELECT userID FROM Project_User where projectID=?', projectData.projectID);
+            let users = await Project.getProjectUsers(projectUserRows);
 
-            // Query to fetch users associated with the project
-            // Only necessary user info for project!
-            const [userRows,] = await conn.query(`
-            SELECT u.userID, 
-            u.userName, 
-            u.firstName, 
-            u.lastName
-            FROM User u
-            INNER JOIN Project_User pu ON u.userID = pu.userID
-            WHERE pu.projectID = ?
-        `, [projectID]);
-
-            // Attach users data to the project object
-            project.users = userRows;
+            const project = {
+                projectID: projectData.projectID,
+                projectName: projectData.projectName,
+                description: projectData.projectName,
+                key: projectData.projectName,
+                endDate: projectData.projectEndDate,
+                managerID: projectData.managerID,
+                manager: projectManagerUser,
+                users: users,
+            };
 
             // Return the project object with associated users
             result(null, project);
@@ -131,15 +147,34 @@ Project.findByUserID = async (userID, result) => {
 
         // Query the database to find projects associated with the user
         const [projectRows,] = await conn.query(`
-      SELECT p.*
-      FROM Project p
-      INNER JOIN Project_User pu ON p.projectID = pu.projectID
-      WHERE pu.userID = ?
-    `, [userID]);
+        SELECT p.*
+        FROM Project p
+        INNER JOIN Project_User pu ON p.projectID = pu.projectID
+        WHERE pu.userID = ?
+        `, [userID]);
 
-        // If projects are found, return them
+        // If the project is found, proceed to fetch users associated with the project
         if (projectRows.length > 0) {
-            result(null, projectRows);
+            const projectData = projectRows[0]; // Retrieve the project data
+            const [projectManager,] = await conn.query('SELECT userID FROM ProjectManager where managerID=?', projectData.managerID);
+            const [projectManagerUser,] = await conn.query('SELECT userID, userName, firstName, lastName FROM User where userID=?', projectManager[0].userID);
+            const [projectUserRows,] = await conn.query('SELECT userID FROM Project_User where projectID=?', projectData.projectID);
+            let users = await Project.getProjectUsers(projectUserRows);
+
+            const project = {
+                projectID: projectData.projectID,
+                projectName: projectData.projectName,
+                description: projectData.projectName,
+                key: projectData.projectName,
+                endDate: projectData.projectEndDate,
+                managerID: projectData.managerID,
+                manager: projectManagerUser,
+                users: users,
+            };
+
+            // Return the project object with associated users
+            result(null, project);
+            
         } else {
             // No projects found for the user
             result({ message: `No projects found for user with ID ${userID}` }, null);
@@ -220,6 +255,48 @@ Project.remove = async (projectId, result) => {
     }
 }
 
+
+//---------------------------------------------- Helper Method ---------------------------------------//
+
+// Function to retrieve users for a project
+Project.getProjectUsers = async (projectUserRows) => {
+    let conn;
+    try {
+        conn = await connectionPool.promise().getConnection();
+        const users = [];
+        console.log(projectUserRows)
+        for (const userRow of projectUserRows) {
+            const [userRows,] = await conn.query('SELECT * FROM user WHERE userID = ?', userRow.userID);
+            if (userRows.length > 0) {
+                let userData = userRows[0];
+                let role;
+                let [managerRows, managerFields] = await conn.query("SELECT COUNT(*) AS isProjectManager FROM projectmanager WHERE userID = ?", userData.userID);
+                if (userData.isAdmin === 1) {
+                    role = Role.ADMIN;
+                } else if (managerRows[0].isProjectManager === 1) {
+                    role = Role.PROJECT_MANAGER;
+                } else {
+                    role = Role.USER;
+                }
+                const user = {
+                    userID: userData.userID,
+                    username: userData.userName,
+                    firstname: userData.firstName,
+                    lastname: userData.lastName
+                };
+                users.push(user);
+            }
+        }
+        return users;
+    } catch (error) {
+        console.error("Error retrieving users from database:", error);
+        throw { message: "Error retrieving users from database" };
+    } finally {
+        if (conn) {
+            conn.release();
+        }
+    }
+};
 module.exports = {
     Project
 };
