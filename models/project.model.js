@@ -1,3 +1,4 @@
+const { convertTimeStampToDateTime } = require("./convertDateTime");
 const { connectionPool } = require("./db");
 const { Role } = require("./role");
 
@@ -67,13 +68,15 @@ Project.getAll = async (result) => {
                 const [projectManagerUser,] = await conn.query('SELECT userID, userName, firstName, lastName FROM User where userID=?', projectManager[0].userID);
                 const [projectUserRows,] = await conn.query('SELECT userID FROM Project_User where projectID=?', projectRow.projectID);
                 let users = await Project.getProjectUsers(projectUserRows);
+                
+                const endDate = convertTimeStampToDateTime(projectRow.projectEndDate)
 
                 const project = {
                     projectID: projectRow.projectID,
                     projectName: projectRow.projectName,
                     description: projectRow.projectName,
                     key: projectRow.projectName,
-                    endDate: projectRow.projectEndDate,
+                    endDate: endDate,
                     managerID: projectRow.managerID,
                     manager: projectManagerUser,
                     users: users,
@@ -157,7 +160,7 @@ Project.findByUserID = async (userID, result) => {
         if (projectRows.length > 0) {
             const projectData = projectRows[0]; // Retrieve the project data
             const [projectManager,] = await conn.query('SELECT userID FROM ProjectManager where managerID=?', projectData.managerID);
-            const [projectManagerUser,] = await conn.query('SELECT userID, userName, firstName, lastName FROM User where userID=?', projectManager[0].userID);
+            const [projectManagerUser,] = await conn.query('SELECT userID, userName, firstName, lastName,  FROM User where userID=?', projectManager[0].userID);
             const [projectUserRows,] = await conn.query('SELECT userID FROM Project_User where projectID=?', projectData.projectID);
             let users = await Project.getProjectUsers(projectUserRows);
 
@@ -282,7 +285,8 @@ Project.getProjectUsers = async (projectUserRows) => {
                     userID: userData.userID,
                     username: userData.userName,
                     firstname: userData.firstName,
-                    lastname: userData.lastName
+                    lastname: userData.lastName,
+                    role: role
                 };
                 users.push(user);
             }

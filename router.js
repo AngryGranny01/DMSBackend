@@ -41,6 +41,7 @@ router.delete("/projects", projectController.delete);
 router.delete("/projectManager", projectManagerController.delete);
 
 //-------------------------------------------- Check If Exists --------------------------------------------------------------//
-router.get("/user/exist", userController.checkIfExist);
+router.get("/user/exist/email", userController.checkIfEmailExist);
+router.get("/user/exist/username", userController.checkIfUsernamExist);
 
 module.exports = router

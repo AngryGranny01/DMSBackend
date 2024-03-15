@@ -6,7 +6,7 @@ USE dmsproject;
 
 CREATE TABLE User (
     userID INT PRIMARY KEY AUTO_INCREMENT,
-    userName VARCHAR(255),
+    userName VARCHAR(255) Unique,
     firstName VARCHAR(255),
     lastName VARCHAR(255),
     email VARCHAR(255) Unique,

@@ -288,6 +288,27 @@ User.checkIfEmailAlreadyUsed = async (email, result) => {
     }
 };
 
+// Function to check if email already exists
+User.checkIfUsernameAlreadyUsed = async (username, result) => {
+    let conn;
+    try {
+        conn = await connectionPool.promise().getConnection();
+        const query = "SELECT * FROM user WHERE userName = ?";
+        const [rows, fields] = await conn.query(query, username);
+        if (rows.length === 0) {
+            result(null, { exist: false });
+        } else {
+            result(null, { exist: true });
+        }
+    } catch (err) {
+        result(err, null);
+    } finally {
+        if (conn) {
+            conn.release();
+        }
+    }
+};
+
 User.checkEmailAndPassword = async (email, password, result) => {
     let conn;
     try {

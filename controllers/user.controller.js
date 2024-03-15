@@ -108,7 +108,7 @@ exports.delete = (req, res) => {
 
 
 // Check if email already exists
-exports.checkIfExist = async (req, res) => {
+exports.checkIfEmailExist = async (req, res) => {
     if (!req.query.email) {
         return res.status(400).send({
             message: "Email is required"
@@ -118,6 +118,26 @@ exports.checkIfExist = async (req, res) => {
     User.checkIfEmailAlreadyUsed(req.query.email, (err, data) => {
         if (err) {
             console.error("Error occurred while checking if email exists:", err);
+            return res.status(500).send({
+                message: "Some error occurred while checking if the User exists."
+            });
+        } else {
+            res.send(data);
+        }
+    });
+};
+
+// Check if username already exists
+exports.checkIfUsernamExist = async (req, res) => {
+    if (!req.query.username) {
+        return res.status(400).send({
+            message: "Username is required"
+        });
+    }
+    
+    User.checkIfUsernameAlreadyUsed(req.query.username, (err, data) => {
+        if (err) {
+            console.error("Error occurred while checking if username exists:", err);
             return res.status(500).send({
                 message: "Some error occurred while checking if the User exists."
             });
