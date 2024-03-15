@@ -143,7 +143,7 @@ Project.findByID = async (projectID, result) => {
 };
 
 // Function to retrieve all projects associated with a specific user
-Project.findByUserID = async (userID, result) => {
+Project.findProjectsByUserID = async (userID, result) => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
@@ -156,27 +156,34 @@ Project.findByUserID = async (userID, result) => {
         WHERE pu.userID = ?
         `, [userID]);
 
+        const projects = [];
+
         // If the project is found, proceed to fetch users associated with the project
         if (projectRows.length > 0) {
-            const projectData = projectRows[0]; // Retrieve the project data
-            const [projectManager,] = await conn.query('SELECT userID FROM ProjectManager where managerID=?', projectData.managerID);
-            const [projectManagerUser,] = await conn.query('SELECT userID, userName, firstName, lastName,  FROM User where userID=?', projectManager[0].userID);
-            const [projectUserRows,] = await conn.query('SELECT userID FROM Project_User where projectID=?', projectData.projectID);
-            let users = await Project.getProjectUsers(projectUserRows);
+            for (const projectRow of projectRows) {
+                const projectData = projectRow; // Retrieve the project data
+                const [projectManager,] = await conn.query('SELECT userID FROM ProjectManager where managerID=?', projectData.managerID);
+                const [projectManagerUser,] = await conn.query('SELECT userID, userName, firstName, lastName FROM User where userID=?', projectManager[0].userID);
+                const [projectUserRows,] = await conn.query('SELECT userID FROM Project_User where projectID=?', projectData.projectID);
+                let users = await Project.getProjectUsers(projectUserRows);
 
-            const project = {
-                projectID: projectData.projectID,
-                projectName: projectData.projectName,
-                description: projectData.projectName,
-                key: projectData.projectName,
-                endDate: projectData.projectEndDate,
-                managerID: projectData.managerID,
-                manager: projectManagerUser,
-                users: users,
-            };
+                const endDate = convertTimeStampToDateTime(projectRow.projectEndDate)
+
+                const project = {
+                    projectID: projectData.projectID,
+                    projectName: projectData.projectName,
+                    description: projectData.projectName,
+                    key: projectData.projectName,
+                    endDate: endDate,
+                    managerID: projectData.managerID,
+                    manager: projectManagerUser,
+                    users: users,
+                };
+                projects.push(project)
+            }
 
             // Return the project object with associated users
-            result(null, project);
+            result(null, projects);
 
         } else {
             // No projects found for the user

@@ -69,7 +69,7 @@ exports.findOneProject = (req, res) => {
 
 // Retrieve all Projects associated with a specific User
 exports.findAllUserProjects = (req, res) => {
-  Project.findByUserID(req.query.userID, (err, projects) => {
+  Project.findProjectsByUserID(req.query.userID, (err, projects) => {
     if (err) {
       // If an error occurs, return 500 Internal Server Error
       return res.status(500).send({
