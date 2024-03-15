@@ -11,7 +11,7 @@ ProjectManager.updateByID = async (userID, managerID, result) => {
     try {
         conn = await connectionPool.promise().getConnection();
         await conn.beginTransaction();
-
+        
         // Query to retrieve Project Manager ID using User ID
         const [rows] = await conn.query('SELECT managerID FROM ProjectManager WHERE userID = ?', [userID]);
         

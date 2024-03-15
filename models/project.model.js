@@ -68,7 +68,7 @@ Project.getAll = async (result) => {
                 const [projectManagerUser,] = await conn.query('SELECT userID, userName, firstName, lastName FROM User where userID=?', projectManager[0].userID);
                 const [projectUserRows,] = await conn.query('SELECT userID FROM Project_User where projectID=?', projectRow.projectID);
                 let users = await Project.getProjectUsers(projectUserRows);
-                
+
                 const endDate = convertTimeStampToDateTime(projectRow.projectEndDate)
 
                 const project = {
@@ -177,7 +177,7 @@ Project.findByUserID = async (userID, result) => {
 
             // Return the project object with associated users
             result(null, project);
-            
+
         } else {
             // No projects found for the user
             result({ message: `No projects found for user with ID ${userID}` }, null);
@@ -199,18 +199,15 @@ Project.updateByID = async (projectData, result) => {
         conn = await connectionPool.promise().getConnection();
         await conn.beginTransaction();
 
-        // Extract project data
-        const { projectID, projectName, projectDescription, projectKey, projectEndDate, managerID, userIDs } = projectData;
-
         // Update project details in the Project table
-        await conn.query('UPDATE Project SET projectName = ?, projectDescription = ?, projectKey = ?, projectEndDate = ?, managerID = ? WHERE projectID = ?', [projectName, projectDescription, projectKey, projectEndDate, managerID, projectID]);
+        await conn.query('UPDATE Project SET projectName = ?, projectDescription = ?, projectKey = ?, projectEndDate = ?, managerID = ? WHERE projectID = ?', [projectData.projectName, projectData.projectDescription, projectData.projectKey, new Date(projectData.projectEndDate), projectData.managerID, projectData.projectID]);
 
         // Delete existing entries in Project_User table for the project
-        await conn.query('DELETE FROM Project_User WHERE projectID = ?', projectID);
+        await conn.query('DELETE FROM Project_User WHERE projectID = ?', projectData.projectID);
 
         // Insert new entries in Project_User table for the project
-        const insertUserPromises = userIDs.map(async ({ userID }) => {
-            await conn.query('INSERT INTO Project_User (userID, projectID) VALUES (?, ?)', [userID, projectID]);
+        const insertUserPromises = projectData.userIDs.map(async ({ userID }) => {
+            await conn.query('INSERT INTO Project_User (userID, projectID) VALUES (?, ?)', [userID, projectData.projectID]);
         });
         await Promise.all(insertUserPromises);
 
@@ -267,7 +264,7 @@ Project.getProjectUsers = async (projectUserRows) => {
     try {
         conn = await connectionPool.promise().getConnection();
         const users = [];
-        console.log(projectUserRows)
+
         for (const userRow of projectUserRows) {
             const [userRows,] = await conn.query('SELECT * FROM user WHERE userID = ?', userRow.userID);
             if (userRows.length > 0) {
