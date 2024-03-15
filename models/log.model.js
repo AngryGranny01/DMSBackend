@@ -43,7 +43,6 @@ Log.create = async (log, result) => {
     }
 };
 
-// Find Project Logs by Project ID
 Log.findProjectLogsByID = async (projectID, result) => {
     let conn;
     try {
@@ -58,29 +57,35 @@ Log.findProjectLogsByID = async (projectID, result) => {
         const [logRows] = await conn.query(queryProjectLog, projectID);
         const projectLogs = [];
 
-        // Process log data
-        for (let logRow of logRows) {
-            let timeStamp = convertTimeStampToDateTime(logRow.timeStamp);
-            let [userRows] = await conn.query("Select firstName, lastName from User where userID = ?", logRow.userID);
-            if (userRows.length > 0) {
-                let user = userRows[0];
-                const log = {
-                    logUserID: logRow.logID,
-                    projectID: logRow.projectID,
-                    userID: logRow.userID,
-                    activityName: logRow.activityName,
-                    activityDescription: logRow.activityDescription,
-                    timeStamp: timeStamp,
-                    firstName: user.firstName,
-                    lastName: user.lastName
-                };
-                projectLogs.push(log);
-            }else {
-                // Handle case where user is not found
-                console.error(`User with userID ${logRow.userID} not found.`);
+        // Check if any logs are found
+        if (logRows.length > 0) {
+            // Process each log row
+            for (let logRow of logRows) {
+                let timeStamp = convertTimeStampToDateTime(logRow.timeStampLog);
+                let [userRows] = await conn.query("Select firstName, lastName from User where userID = ?", logRow.userID);
+
+                // Check if user data is found
+                if (userRows.length > 0) {
+                    let user = userRows[0];
+                    const log = {
+                        logUserID: logRow.logID,
+                        projectID: logRow.projectID,
+                        userID: logRow.userID,
+                        activityName: logRow.activityName,
+                        activityDescription: logRow.activityDescription,
+                        timeStamp: timeStamp,
+                        firstName: user.firstName,
+                        lastName: user.lastName
+                    };
+                    projectLogs.push(log);
+                } else {
+                    // Handle case where user is not found
+                    console.error(`User with userID ${logRow.userID} not found.`);
+                }
             }
         }
 
+        // Return projectLogs after processing all logs
         result(null, projectLogs);
     } catch (error) {
         console.error("Error retrieving Project Logs from database:", error);
@@ -141,11 +146,11 @@ Log.findByID = async (userID, result) => {
                     lastName: user.lastName
                 };
                 usersLog.push(log);
-            }else {
+            } else {
                 // Handle case where user is not found
                 console.error(`User with userID ${logRow.userID} not found.`);
             }
-            
+
         }
 
         result(null, usersLog);
