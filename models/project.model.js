@@ -43,7 +43,7 @@ Project.create = async (newProject, result) => {
 
         await conn.commit();
         // Return the inserted project's ID
-        result(null, { id: projectId });
+        result(null, { projectID: projectId });
     } catch (error) {
         await conn.rollback();
         console.error("Error occurred while inserting a new Project: ", error);

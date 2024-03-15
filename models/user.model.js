@@ -33,7 +33,7 @@ User.create = async (userData, isProjectManager, result) => {
         }
 
         await conn.commit();
-        result(null, { id: rowsUser.insertId });
+        result(null, rowsUser.insertId );
     } catch (error) {
         await conn.rollback();
         console.error("Error occurred while inserting a new User: ", error);
@@ -83,7 +83,7 @@ User.getAllUsersWithLastLoginDate = async (result) => {
                 ActivityLogUser
             WHERE 
                 userID = ? 
-                AND (activityName = 'LOGIN' OR activityName = 'CREATED')
+                AND (activityName = '${ActivityName.LOGIN}' OR activityName = '${ActivityName.CREATE_USER}')
             `;
 
             let [logRows, logFields] = await conn.query(selectLastLoginSql, userRow.userID);
