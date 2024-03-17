@@ -1,14 +1,14 @@
 class Role {
     static get USER() {
-        return "user";
+        return "USER";
     }
 
     static get PROJECT_MANAGER() {
-        return "projectManager";
+        return "PROJECT MANAGER";
     }
 
     static get ADMIN() {
-        return "admin";
+        return "ADMIN";
     }
 }
 

@@ -32,8 +32,6 @@ function decryptUsingAES256(data, cipherKeyAES) {
 }
 
 function convertAESStringToInt(encrpytedString) {
-  // Clean up the decrypted value to remove any non-numeric characters
-  //var cleanedValue = encrpytedString.replace(/\D/g, '');
 
   // Parse the cleaned value as an integer
   var integerValue = parseInt(encrpytedString, 10);
