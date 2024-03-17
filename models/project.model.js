@@ -19,19 +19,20 @@ Project.create = async (newProject, result) => {
     try {
         conn = await connectionPool.promise().getConnection();
         await conn.beginTransaction();
-        console.log(newProject)
 
         const insertProjectSql = 'INSERT INTO Project SET ?'
 
         let cipherKey = newProject.projectKey
-        let managerID = crypto.convertAESStringToInt(crypto.decryptUsingAES256(newProject.managerID, cipherKey))
-        
+        let managerID = newProject.managerID //crypto.decryptUsingAES256
+        let decryptedDescription = newProject.projectDescription //crypto.decryptUsingAES256
+        let decryptedProjectName = newProject.projectName //crypto.decryptUsingAES256
+
         const projectData = {
-            projectDescription: newProject.projectDescription,
+            projectDescription: decryptedDescription,
             projectKey: cipherKey,
-            projectName: newProject.projectName,
+            projectName: decryptedProjectName,
             managerID: managerID,
-            projectEndDate: new Date(newProject.projectEndDate)
+            projectEndDate: new Date(newProject.projectEndDate) //crypto.decryptUsingAES256
         }
 
         // Insert the project data into the Project table
@@ -43,14 +44,15 @@ Project.create = async (newProject, result) => {
         // Insert users into the Project_User table
         if (newProject.userIDs && newProject.userIDs.length > 0) {
             for (const user of newProject.userIDs) {
-                let userID = crypto.convertAESStringToInt(crypto.decryptUsingAES256(user.userID, user.projectUserKey))
+                let userID = user.userID //crypto.decryptUsingAES256
                 await conn.query("INSERT INTO Project_User (userID, projectID, userProjectKey) VALUES (?, ?, ?)", [userID, projectID, user.projectUserKey]);
             }
         }
 
         await conn.commit();
+        //let encryptedProjectID = crypto.encryptUsingAES256(projectID, newProject.projectKey)
         // Return the inserted project's ID
-        result(null, { projectID: crypto.encryptUsingAES256(projectID, newProject.projectKey)});
+        result(null, { projectID: projectID});
     } catch (error) {
         await conn.rollback();
         console.error("Error occurred while inserting a new Project: ", error);

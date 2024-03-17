@@ -1,5 +1,6 @@
 const { connectionPool } = require("./db");
 const { convertTimeStampToDateTime } = require("../utils/convertDateTime");
+const crypto = require("../utils/crypto")
 
 const Log = function (log, timeStamp, user) {
     this.logID = log.logID;
@@ -18,20 +19,23 @@ Log.create = async (log, result) => {
     try {
         conn = await connectionPool.promise().getConnection();
         await conn.beginTransaction();
-
+        console.log("Log entry")
+        console.log("Log entry: "+log)
         // Insert Log data into the database
         const insertLogSql = 'INSERT INTO activityLog SET ?';
+        let decryptedActivityDescription = log.activityDescription //decryptUsingAES256
+        let decryptedActivityName = log.activityName //decryptUsingAES256
         const logData = {
-            activityDescription: log.activityDescription,
-            activityName: log.activityName,
-            userID: log.userID,
-            projectID: log.projectID,
+            activityDescription: decryptedActivityDescription,
+            activityName: decryptedActivityName,
+            userID: log.userID, //decryptUsingAES256
+            projectID: log.projectID, //decryptUsingAES256
             timeStampLog: new Date()
         };
-        const [rowsLog, fieldsUser] = await conn.query(insertLogSql, logData);
+        await conn.query(insertLogSql, logData);
 
         await conn.commit();
-        result(null, { id: rowsLog.insertId });
+        result(null, null);
     } catch (error) {
         await conn.rollback();
         console.error("Error occurred while inserting a new Log Entry: ", error);
@@ -61,7 +65,7 @@ Log.findProjectLogsByID = async (projectID, result) => {
         if (logRows.length > 0) {
 
             // Get Name of the Log Create
-            let [userRows] = await conn.query("Select firstName, lastName from User where userID = ?", userID);
+            let [userRows] = await conn.query("Select firstName, lastName from User where userID = ?", logRows[0].userID);
 
             if (userRows.length > 0) {
                 let user = userRows[0];

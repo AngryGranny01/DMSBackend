@@ -13,14 +13,14 @@ exports.create = async (req, res) => {
     const logData = req.body;
 
     // Call the create function on the Log model to save the new Log
-    Log.create(logData, (err, data) => {
+    Log.create(logData, (err,) => {
         if (err) {
             res.status(500).send({
                 message: err.message || "Some error occurred while creating the Project Log."
             });
         } else {
-            // Return the logID of the newly created Log
-            res.send({ logID: data });
+            // Return nothing
+            res.send(null);
         }
     });
 };
