@@ -27,8 +27,10 @@ router.get("/logs/project", logController.findProjectLogs);
 //-------------------------------------------- Find One By ID --------------------------------------------------------------//
 router.get("/projects/:id", projectController.findOneProject);
 router.get("/users/:id", userController.findOne);
-router.get("/projectManager/:id", projectManagerController.findManagerID);
 
+//get Admin Password, Manager Password and ManagerID
+router.get("/projectAdminAndManager/passwords/:id", projectManagerController.findManagerAndAdminPassword);
+router.get("/user/findSalt", userController.findSalt)
 
 //-------------------------------------------- Update --------------------------------------------------------------//
 router.put("/users", userController.update);

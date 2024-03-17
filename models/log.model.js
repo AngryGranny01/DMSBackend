@@ -1,5 +1,5 @@
 const { connectionPool } = require("./db");
-const { convertTimeStampToDateTime } = require("./convertDateTime");
+const { convertTimeStampToDateTime } = require("../utils/convertDateTime");
 
 const Log = function (log, timeStamp, user) {
     this.logID = log.logID;
@@ -87,7 +87,7 @@ Log.findProjectLogsByID = async (projectID, result) => {
                 console.error(`User with userID ${logRow.userID} not found.`);
             }
         }
-        
+
         // Return projectLogs after processing all logs
         result(null, projectLogs);
     } catch (error) {

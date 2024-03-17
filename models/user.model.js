@@ -1,6 +1,6 @@
 const { connectionPool } = require("./db");
 const { Role } = require("./role");
-const { findNewestDate } = require('./convertDateTime');
+const { findNewestDate } = require('../utils/convertDateTime');
 const { ActivityName } = require('./activityName');
 
 // User model definition
@@ -33,7 +33,7 @@ User.create = async (userData, isProjectManager, result) => {
         }
 
         await conn.commit();
-        result(null, rowsUser.insertId );
+        result(null, rowsUser.insertId);
     } catch (error) {
         await conn.rollback();
         console.error("Error occurred while inserting a new User: ", error);
@@ -114,6 +114,30 @@ User.getAllUsersWithLastLoginDate = async (result) => {
         }
     }
 };
+
+User.findSaltByEmail = async (email, result) => {
+    let conn;
+    try {
+        conn = await connectionPool.promise().getConnection();
+
+        // Query the database to find the user by userId
+        const [rows,] = await conn.query('SELECT salt FROM user WHERE email = ?', [email]);
+        if (rows.length > 0) {
+            //return the salt
+            result(null, rows[0]);
+        } else {
+            // User not found
+            result({ message: `Salt with email ${email} not found` }, null);
+        }
+    } catch (error) {
+        console.error("Error retrieving user from database:", error);
+        result({ message: "Error retrieving user from database" }, null);
+    } finally {
+        if (conn) {
+            conn.release();
+        }
+    }
+}
 
 // Function to find a user by ID
 User.findByID = async (userID, result) => {

@@ -26,18 +26,18 @@ exports.update = (req, res) => {
 };
 
 // Retrieve a specific managerID by userID
-exports.findManagerID = (req, res) => {
-    ProjectManager.getProjectManagerIDByUserID(req.params.id, (err, managerID) => {
+exports.findManagerAndAdminPassword = (req, res) => {
+    ProjectManager.getProjectManagerIDByUserID(req.params.id, (err, data) => {
         if (err) {
             return res.status(500).send({
                 message: err.message || 'An error occurred while retrieving the ManagerID.'
             });
-        } else if (!managerID) {
+        } else if (!data) {
             return res.status(404).send({
                 message: `Manager with ID ${req.params.id} was not found.`
             });
         } else {
-            res.send({managerID: managerID});
+            res.send(data);
         }
     });
 };

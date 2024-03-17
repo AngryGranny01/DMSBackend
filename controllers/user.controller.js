@@ -15,6 +15,7 @@ exports.create = async (req, res) => {
         lastName: req.body.lastName,
         email: req.body.email,
         passwordHash: req.body.passwordHash,
+        salt: req.body.salt,
         isAdmin: req.body.isAdmin
     }
 
@@ -43,6 +44,24 @@ exports.findAllWithLastLogin = (req, res) => {
         res.send(data);
     });
 };
+
+// Retrieve a specific User by ID
+exports.findSalt = (req, res) => {
+    User.findSaltByEmail(req.query.email, (err, salt) => {
+        if (err) {
+            return res.status(500).send({
+                message: err.message || 'An error occurred while retrieving the Salt.'
+            });
+        } else if (!salt) {
+            return res.status(404).send({
+                message: `Salt with email ${req.query.email} was not found.`
+            });
+        } else {
+            res.send(salt);
+        }
+    });
+};
+
 
 // Retrieve a specific User by ID
 exports.findOne = (req, res) => {

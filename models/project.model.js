@@ -1,6 +1,7 @@
-const { convertTimeStampToDateTime } = require("./convertDateTime");
+const { convertTimeStampToDateTime } = require("../utils/convertDateTime");
 const { connectionPool } = require("./db");
 const { Role } = require("./role");
+const crypto = require('../utils/crypto');
 
 const Project = function (project, dateTime) {
     this.projectID = project.projectID;
@@ -18,13 +19,18 @@ Project.create = async (newProject, result) => {
     try {
         conn = await connectionPool.promise().getConnection();
         await conn.beginTransaction();
+        console.log(newProject)
 
         const insertProjectSql = 'INSERT INTO Project SET ?'
+
+        let cipherKey = newProject.projectKey
+        let managerID = crypto.convertAESStringToInt(crypto.decryptUsingAES256(newProject.managerID, cipherKey))
+        
         const projectData = {
             projectDescription: newProject.projectDescription,
-            projectKey: newProject.projectKey,
+            projectKey: cipherKey,
             projectName: newProject.projectName,
-            managerID: newProject.managerID,
+            managerID: managerID,
             projectEndDate: new Date(newProject.projectEndDate)
         }
 
@@ -32,18 +38,19 @@ Project.create = async (newProject, result) => {
         const [projectRows, fieldsUser] = await conn.query(insertProjectSql, projectData);
 
         // Retrieve the project ID of the newly inserted project
-        const projectId = projectRows.insertId;
+        const projectID = projectRows.insertId;
 
-        // Insert user IDs into the Project_User table
+        // Insert users into the Project_User table
         if (newProject.userIDs && newProject.userIDs.length > 0) {
             for (const user of newProject.userIDs) {
-                await conn.query("INSERT INTO Project_User (userID, projectID) VALUES (?, ?)", [user.userID, projectId]);
+                let userID = crypto.convertAESStringToInt(crypto.decryptUsingAES256(user.userID, user.projectUserKey))
+                await conn.query("INSERT INTO Project_User (userID, projectID, userProjectKey) VALUES (?, ?, ?)", [userID, projectID, user.projectUserKey]);
             }
         }
 
         await conn.commit();
         // Return the inserted project's ID
-        result(null, { projectID: projectId });
+        result(null, { projectID: crypto.encryptUsingAES256(projectID, newProject.projectKey)});
     } catch (error) {
         await conn.rollback();
         console.error("Error occurred while inserting a new Project: ", error);
