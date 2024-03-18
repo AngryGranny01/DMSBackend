@@ -2,6 +2,7 @@ const { connectionPool } = require("./db");
 const { Role } = require("./role");
 const { findNewestDate } = require('../utils/convertDateTime');
 const { ActivityName } = require('./activityName');
+const { sendOneTimeLink, generateToken } = require("../service/emailService")
 
 // User model definition
 const User = function (user, role, lastLogin) {
@@ -25,6 +26,12 @@ User.create = async (userData, isProjectManager, result) => {
         const insertUserSql = 'INSERT INTO user SET ?';
 
         const [rowsUser, fieldsUser] = await conn.query(insertUserSql, userData);
+
+        // Generate token for email verification
+        const token = generateToken(rowsUser.insertId);
+
+        // Send email with one-time link
+        await sendOneTimeLink(userData.email, token);
 
         // Check if the user is a project manager or Admin
         if (isProjectManager === true || userData.isAdmin === true) {
@@ -393,6 +400,34 @@ User.checkEmailAndPassword = async (email, password, result) => {
         }
     }
 };
+
+User.updatePassword = async (userID, passwordHash, salt, result) => {
+    let conn;
+    try {
+        conn = await connectionPool.promise().getConnection();
+        await conn.beginTransaction();
+
+        // Update the password in the database
+        await conn.query(
+            `UPDATE user SET passwordHash = ?, salt = ? WHERE userID = ?`,
+            [passwordHash, salt, userID]
+        );
+
+        await conn.commit();
+        result(null, `User with ID ${userID} updated successfully`);
+    } catch (error) {
+        console.error("Error occurred while updating users: ", error);
+        await conn.rollback();
+        result(`Error updating user with ID ${userID}`, null);
+    } finally {
+        if (conn) {
+            conn.release();
+        }
+    }
+};
+
+
+
 
 
 module.exports = {

@@ -1,17 +1,12 @@
-let cfg = require('../config/db.config.json')
+const { DB_HOST, DB_USER, DB_NAME, DB_PASSWORD } = require("../constants/env");
 var mysql = require('mysql2')
-
-let mysqlHost = cfg.database.host
-let mysqlPassword = cfg.database.password
-let mysqlUser = cfg.database.user
-let mysqlDatabase = cfg.database.database
 
 
 let connectionOption = {
-    host: mysqlHost,
-    user: mysqlUser,
-    password: mysqlPassword,
-    database: mysqlDatabase,
+    host: DB_HOST,
+    user: DB_USER,
+    password: DB_PASSWORD,
+    database: DB_NAME,
     waitForConnections: true,
     connectionLimit: 10,
     maxIdle: 10,

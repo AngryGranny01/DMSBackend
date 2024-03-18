@@ -46,4 +46,6 @@ router.delete("/projectManager", projectManagerController.delete);
 router.get("/user/exist/email", userController.checkIfEmailExist);
 router.get("/user/exist/username", userController.checkIfUsernamExist);
 
+router.put("/verifyToken", userController.verifyTokenUpdatePassword )
+
 module.exports = router

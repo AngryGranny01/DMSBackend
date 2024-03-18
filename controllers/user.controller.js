@@ -1,4 +1,6 @@
 const { User } = require("../models/user.model");
+const jwt = require('jsonwebtoken');
+const {JWT_SECRET}  = require("../constants/env");
 
 // Create a new user
 exports.create = async (req, res) => {
@@ -165,6 +167,45 @@ exports.checkIfUsernamExist = async (req, res) => {
         }
     });
 };
+
+exports.verifyTokenUpdatePassword = async (req, res) => {
+    const token = req.body.token; // Assuming the token is sent in the request body
+    const passwordHash = req.body.passwordHash;
+    const salt = req.body.salt;
+
+    if (!token) {
+        return res.status(401).send('No token provided');
+    }
+
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        let userID = decoded.userID; // Attach the decoded user to the request object
+
+        // Update the password asynchronously
+        await new Promise((resolve, reject) => {
+            User.updatePassword(userID, passwordHash, salt, (err, data) => {
+                if (err) {
+                    console.error(err);
+                    reject(err);
+                } else {
+                    resolve(data);
+                }
+            });
+        });
+
+        res.send({ message: `User with id ${userID} was updated successfully!` });
+
+    } catch (error) {
+        if (error.name === 'TokenExpiredError') {
+            return res.status(401).send('Token has expired. Please contact admin.');
+        }
+        console.error('Token verification failed:', error);
+        res.status(400).send('Invalid token');
+    }
+};
+
+
+
 
 // Check if email already exists
 exports.checkLogin = async (req, res) => {
