@@ -1,4 +1,5 @@
 const CryptoJS = require('crypto-js');
+const {ITERATIONS_PKDF2, KEY_SIZE_PKDF2}  = require("../constants/env");
 
 
 function encryptUsingAES256(data, cipherKeyAES) {
@@ -31,6 +32,18 @@ function decryptUsingAES256(data, cipherKeyAES) {
   return decryptedString;
 }
 
+function encryptPBKDF2Key(password, salt){
+  return CryptoJS.PBKDF2(password, salt, {
+    keySize: KEY_SIZE_PKDF2 / 32,
+    iterations: ITERATIONS_PKDF2,
+  }).toString(CryptoJS.enc.Hex);
+}
+
+function generateUserProjectKey(userPasswordHash, projectKey) {
+  // Generate a project-specific key for a user based on their password hash and the project key
+  return encryptPBKDF2Key(userPasswordHash, projectKey);
+}
+
 function convertAESStringToInt(encrpytedString) {
 
   // Parse the cleaned value as an integer
@@ -50,6 +63,7 @@ function convertAESStringToInt(encrpytedString) {
 module.exports = {
   decryptUsingAES256,
   encryptUsingAES256,
-  convertAESStringToInt
+  convertAESStringToInt,
+  generateUserProjectKey
 }
 

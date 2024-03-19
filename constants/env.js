@@ -4,6 +4,9 @@ const JWT_SECRET = process.env.JWT_SECRET;
 const EMAIL_ENV = process.env.EMAIL_ENV;
 const PASSWORD_ENV = process.env.PASSWORD_ENV;
 
+const KEY_SIZE_PKDF2 = process.env.KEY_SIZE_PKDF2;
+const ITERATIONS_PKDF2 = process.env.ITERATIONS_PKDF2;
+
 const DB_HOST = process.env.DB_HOST;
 const DB_USER = process.env.DB_USER;
 const DB_NAME = process.env.DB_NAME;
@@ -13,6 +16,8 @@ module.exports = {
     JWT_SECRET,
     EMAIL_ENV,
     PASSWORD_ENV,
+    KEY_SIZE_PKDF2,
+    ITERATIONS_PKDF2,
     DB_HOST,
     DB_USER,
     DB_NAME,

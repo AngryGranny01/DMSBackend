@@ -93,3 +93,4 @@ VALUES
 	('{"userID":7,"username":"emilyjones","timeStamp": "2024-03-15T18:19:06.926Z","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 7, NOW()),
     ('{"userID":8,"username":"michaelwang","timeStamp": "2024-03-15T18:19:06.926Z","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 8, NOW()),
     ('{"userID":9,"username":"laurasmith","timeStamp": "2024-03-15T18:19:06.926Z","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 9, NOW());
+

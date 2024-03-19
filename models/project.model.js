@@ -222,8 +222,8 @@ Project.updateByID = async (projectData, result) => {
         await conn.query('DELETE FROM Project_User WHERE projectID = ?', projectData.projectID);
 
         // Insert new entries in Project_User table for the project
-        const insertUserPromises = projectData.userIDs.map(async ({ userID }) => {
-            await conn.query('INSERT INTO Project_User (userID, projectID) VALUES (?, ?)', [userID, projectData.projectID]);
+        const insertUserPromises = projectData.userIDs.map(async ({ userID, userProjectKey }) => {
+            await conn.query('INSERT INTO Project_User (userProjectKey,userID, projectID) VALUES (?,?, ?)', [userProjectKey,userID, projectData.projectID]);
         });
         await Promise.all(insertUserPromises);
 

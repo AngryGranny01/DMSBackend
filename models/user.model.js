@@ -3,6 +3,7 @@ const { Role } = require("./role");
 const { findNewestDate } = require('../utils/convertDateTime');
 const { ActivityName } = require('./activityName');
 const { sendOneTimeLink, generateToken } = require("../service/emailService")
+const crypto = require("../utils/crypto")
 
 // User model definition
 const User = function (user, role, lastLogin) {
@@ -12,6 +13,7 @@ const User = function (user, role, lastLogin) {
     this.lastName = user.lastname;
     this.email = user.email;
     this.passwordHash = user.password;
+    this.salt = user.salt;
     this.role = role;
     this.lastLogin = lastLogin;
 };
@@ -105,6 +107,7 @@ User.getAllUsersWithLastLoginDate = async (result) => {
                 firstname: userRow.firstName,
                 lastname: userRow.lastName,
                 password: userRow.passwordHash,
+                salt: userRow.salt,
                 email: userRow.email,
             }, role, lastLogin);
 
@@ -198,6 +201,7 @@ User.findByID = async (userID, result) => {
                 lastname: userData.lastName,
                 email: userData.email,
                 password: userData.passwordHash,
+                password: userData.salt,
             }, role, lastLogin);
 
             result(null, user);
@@ -215,7 +219,7 @@ User.findByID = async (userID, result) => {
     }
 };
 
-// Function to update user by ID
+// Function to update user by ID and the User_ProjectKey
 User.updateByID = async (user, result) => {
     let conn;
     try {
@@ -231,11 +235,12 @@ User.updateByID = async (user, result) => {
                     firstName = ?, 
                     lastName = ?, 
                     email = ?, 
-                    passwordHash = ?, 
+                    passwordHash = ?,
+                    salt = ?, 
                     isAdmin = ? 
                 WHERE 
                     userID = ?;`,
-            [user.userName, user.firstName, user.lastName, user.email, user.passwordHash, isAdmin, user.userID]
+            [user.userName, user.firstName, user.lastName, user.email, user.passwordHash, user.salt, isAdmin, user.userID]
         );
 
         // Check if the user is a project manager
@@ -249,6 +254,21 @@ User.updateByID = async (user, result) => {
                 console.log("User successfully added as a project manager.");
             } else {
                 console.log("User is already a project manager.");
+            }
+        }
+
+        //Update ProjectUserKey
+        let projectKeyQuery = `SELECT Project.projectKey
+        FROM Project
+        JOIN Project_User 
+        ON Project.projectID = Project_User.projectID
+        WHERE Project_User.userID = ?;`
+        const [projectKeys] = await conn.query(projectKeyQuery, user.userID);
+
+        if (projectKeys.length > 0) {
+            for (let projectKey of projectKeys) {
+                let userProjectKey = crypto.generateUserProjectKey(user.passwordHash, projectKey)
+                await conn.query("Update Project_User SET userProjectKey = ? WHERE userID = ?;", [userProjectKey, user.userID])
             }
         }
 
@@ -389,6 +409,7 @@ User.checkEmailAndPassword = async (email, password, result) => {
                 lastname: userData.lastName,
                 email: userData.email,
                 password: userData.passwordHash,
+                salt: userData.salt,
             }, role, lastLogin);
             result(null, user);
         }
