@@ -11,11 +11,12 @@ exports.create = async (req, res) => {
 
   const data = req.body;
   // Extract project data from request body
+  let endDate = new Date(data.projectEndDate.year, data.projectEndDate.month, data.projectEndDate.day)
   const projectData = {
     projectName: data.projectName,
     projectDescription: data.projectDescription,
     projectKey: data.projectKey,
-    projectEndDate: data.projectEndDate,
+    projectEndDate: endDate,
     managerID: data.managerID,
     userIDs: data.userIDs
   };

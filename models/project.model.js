@@ -26,13 +26,13 @@ Project.create = async (newProject, result) => {
         let managerID = newProject.managerID //crypto.decryptUsingAES256
         let decryptedDescription = newProject.projectDescription //crypto.decryptUsingAES256
         let decryptedProjectName = newProject.projectName //crypto.decryptUsingAES256
-
+      
         const projectData = {
             projectDescription: decryptedDescription,
             projectKey: cipherKey,
             projectName: decryptedProjectName,
             managerID: managerID,
-            projectEndDate: new Date(newProject.projectEndDate) //crypto.decryptUsingAES256
+            projectEndDate: newProject.projectEndDate //crypto.decryptUsingAES256
         }
 
         // Insert the project data into the Project table
