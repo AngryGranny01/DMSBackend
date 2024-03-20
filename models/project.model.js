@@ -26,7 +26,7 @@ Project.create = async (newProject, result) => {
         let managerID = newProject.managerID //crypto.decryptUsingAES256
         let decryptedDescription = newProject.projectDescription //crypto.decryptUsingAES256
         let decryptedProjectName = newProject.projectName //crypto.decryptUsingAES256
-      
+
         const projectData = {
             projectDescription: decryptedDescription,
             projectKey: cipherKey,
@@ -52,7 +52,7 @@ Project.create = async (newProject, result) => {
         await conn.commit();
         //let encryptedProjectID = crypto.encryptUsingAES256(projectID, newProject.projectKey)
         // Return the inserted project's ID
-        result(null, { projectID: projectID});
+        result(null, { projectID: projectID });
     } catch (error) {
         await conn.rollback();
         console.error("Error occurred while inserting a new Project: ", error);
@@ -223,7 +223,7 @@ Project.updateByID = async (projectData, result) => {
 
         // Insert new entries in Project_User table for the project
         const insertUserPromises = projectData.userIDs.map(async ({ userID, userProjectKey }) => {
-            await conn.query('INSERT INTO Project_User (userProjectKey,userID, projectID) VALUES (?,?, ?)', [userProjectKey,userID, projectData.projectID]);
+            await conn.query('INSERT INTO Project_User (userProjectKey,userID, projectID) VALUES (?,?, ?)', [userProjectKey, userID, projectData.projectID]);
         });
         await Promise.all(insertUserPromises);
 

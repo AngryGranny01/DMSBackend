@@ -1,6 +1,7 @@
 const { User } = require("../models/user.model");
 const jwt = require('jsonwebtoken');
-const {JWT_SECRET}  = require("../constants/env");
+const { JWT_SECRET } = require("../constants/env");
+const { STANDARD_PRIVATE_KEY, STANDARD_PUBLIC_KEY } = require("../constants/env")
 
 // Create a new user
 exports.create = async (req, res) => {
@@ -10,19 +11,20 @@ exports.create = async (req, res) => {
             message: "Content can not be empty!"
         });
     }
-
     const userData = {
         userName: req.body.userName,
         firstName: req.body.firstName,
         lastName: req.body.lastName,
         email: req.body.email,
-        passwordHash: req.body.passwordHash,
-        salt: req.body.salt,
-        isAdmin: req.body.isAdmin
+        orgEinheit: req.body.orgEinheit,
+        isAdmin: req.body.isAdmin,
+        isProjectManager: req.body.isProjectManager,
+        passwordHash: STANDARD_PRIVATE_KEY,
+        publicKey: STANDARD_PUBLIC_KEY
     }
 
     // Call the create function on the User model to save the new user
-    User.create(userData,req.body.isProjectManager, (err, data) => {
+    User.create(userData, (err, data) => {
         if (err) {
             return res.status(500).send({
                 message: err.message || "Some error occurred while creating the User."
@@ -35,19 +37,19 @@ exports.create = async (req, res) => {
 };
 
 // Retrieve all Users with last login date
-exports.findAllWithLastLogin = (req, res) => {
-    // Retrieve all Users from the database with last Login date.
-    User.getAllUsersWithLastLoginDate((err, data) => {
+exports.getAllUsers = (req, res) => {
+    // Retrieve all Users from the database .
+    User.getAll(req.params.senderUserID, (err, data) => {
         if (err) {
             return res.status(500).send({
-                message: err.message || "Some error occurred while retrieving Users with last login."
+                message: err.message || "Some error occurred while retrieving Users."
             });
         }
         res.send(data);
     });
 };
 
-// Retrieve a specific User by ID
+// Retrieve a saltByEmail
 exports.findSalt = (req, res) => {
     User.findSaltByEmail(req.query.email, (err, salt) => {
         if (err) {
@@ -82,22 +84,16 @@ exports.findOne = (req, res) => {
     });
 };
 
-// Update a User identified by the id in the request
+// Update a User by ID
 exports.update = (req, res) => {
-    // Validate Request
-    if (!req.body) {
-        return res.status(400).send({
-            message: "Content can not be empty!"
-        });
-    }
-
+    // Call the updateByID function on the User model to update the user
     User.updateByID(req.body, (err, data) => {
         if (err) {
             console.error(err);
             return res.status(500).send({
                 message: "Error updating User with id " + req.body.userID
             });
-        } else if (!data || data.affectedRows === 0) {
+        } else if (data === "not_found") {
             return res.status(404).send({
                 message: `User with id ${req.body.userID} not found.`
             });
@@ -112,20 +108,21 @@ exports.delete = (req, res) => {
     // Call the remove method of the User model with the userId query parameter
     User.remove(req.query.userID, (err, data) => {
         if (err) {
-            if (err.kind === "not_found") {
-                return res.status(404).send({
-                    message: `User not found.`,
-                });
-            } else {
-                return res.status(500).send({
-                    message: `Could not delete User`,
-                });
-            }
+            console.error("Error occurred while deleting user:", err);
+            return res.status(500).send({
+                message: "Could not delete User"
+            });
+        } else if (data === 0) {
+            return res.status(404).send({
+                message: `User with id ${req.query.userID} not found.`
+            });
         } else {
             res.send({ message: "User was deleted successfully!" });
         }
     });
 };
+
+
 
 
 // Check if email already exists
@@ -135,7 +132,7 @@ exports.checkIfEmailExist = async (req, res) => {
             message: "Email is required"
         });
     }
-    
+
     User.checkIfEmailAlreadyUsed(req.query.email, (err, data) => {
         if (err) {
             console.error("Error occurred while checking if email exists:", err);
@@ -149,14 +146,14 @@ exports.checkIfEmailExist = async (req, res) => {
 };
 
 // Check if username already exists
-exports.checkIfUsernamExist = async (req, res) => {
+exports.checkIfUsernameExist = async (req, res) => {
     if (!req.query.username) {
         return res.status(400).send({
             message: "Username is required"
         });
     }
-    
-    User.checkIfUsernameAlreadyUsed(req.query.username, (err, data) => {
+
+    User.isUsernameAlreadyUsed(req.query.username, (err, data) => {
         if (err) {
             console.error("Error occurred while checking if username exists:", err);
             return res.status(500).send({
@@ -168,18 +165,43 @@ exports.checkIfUsernamExist = async (req, res) => {
     });
 };
 
-exports.verifyTokenUpdatePassword = async (req, res) => {
-    const token = req.body.token; // Assuming the token is sent in the request body
+exports.checkLogin = async (req, res) => {
+    // Validate the presence of required parameters
+    if (!req.query.email || !req.query.passwordHash) {
+        return res.status(400).send({
+            message: "Email and passwordHash are required"
+        });
+    }
+
+    // Call the checkEmailAndPassword function to validate login credentials
+    User.checkEmailAndPassword(req.query.email, req.query.passwordHash, (err, data) => {
+        if (err) {
+            console.error("Error occurred while checking for Email and Password exists:", err);
+            return res.status(500).send({
+                message: "Some error occurred while checking if the User exists."
+            });
+        } else {
+            // If no error, send the result (either user data or null if not found)
+            res.send(data);
+        }
+    });
+};
+
+//verifys the token and then updates the user password
+exports.verifyToken = async (req, res) => {
+    const token = req.body.token;
     const passwordHash = req.body.passwordHash;
     const salt = req.body.salt;
 
+    // Check if token is provided
     if (!token) {
         return res.status(401).send('No token provided');
     }
 
     try {
+        // Verify the token
         const decoded = jwt.verify(token, JWT_SECRET);
-        let userID = decoded.userID; // Attach the decoded user to the request object
+        let userID = decoded.userID; // Extract the user ID from the decoded token
 
         // Update the password asynchronously
         await new Promise((resolve, reject) => {
@@ -202,27 +224,4 @@ exports.verifyTokenUpdatePassword = async (req, res) => {
         console.error('Token verification failed:', error);
         res.status(400).send('Invalid token');
     }
-};
-
-
-
-
-// Check if email already exists
-exports.checkLogin = async (req, res) => {
-    if (!req.query.email || !req.query.passwordHash) {
-        return res.status(400).send({
-            message: "Email is required"
-        });
-    }
-    
-    User.checkEmailAndPassword(req.query.email, req.query.passwordHash,(err, data) => {
-        if (err) {
-            console.error("Error occurred while checking for Email and Password exists:", err);
-            return res.status(500).send({
-                message: "Some error occurred while checking if the User exists."
-            });
-        } else {
-            res.send(data);
-        }
-    });
 };

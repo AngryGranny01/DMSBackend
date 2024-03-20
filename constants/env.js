@@ -7,6 +7,9 @@ const PASSWORD_ENV = process.env.PASSWORD_ENV;
 const KEY_SIZE_PKDF2 = process.env.KEY_SIZE_PKDF2;
 const ITERATIONS_PKDF2 = process.env.ITERATIONS_PKDF2;
 
+const STANDARD_PRIVATE_KEY = process.env.STANDARD_PRIVATE_KEY;
+const STANDARD_PUBLIC_KEY = process.env.STANDARD_PUBLIC_KEY;
+
 const DB_HOST = process.env.DB_HOST;
 const DB_USER = process.env.DB_USER;
 const DB_NAME = process.env.DB_NAME;

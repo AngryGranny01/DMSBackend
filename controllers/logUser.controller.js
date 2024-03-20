@@ -24,3 +24,48 @@ exports.create = async (req, res) => {
         }
     });
 };
+
+exports.lastLoginDates = async (res) => {
+    try {
+        // Call the getUsersLastLogin function on the LogUser model to retrieve last login dates
+        LogUser.getUsersLastLogin((err, data) => {
+            if (err) {
+                console.error("Error occurred while retrieving last login dates: ", err);
+                res.status(500).send({
+                    message: "Some error occurred while retrieving last login dates."
+                });
+            } else {
+                // Send the last login dates as a response
+                res.send(data);
+            }
+        });
+    } catch (error) {
+        console.error("An error occurred: ", error);
+        res.status(500).send({
+            message: "Internal server error."
+        });
+    }
+};
+
+
+exports.lastLoginDate = async (req,res) => {
+    try {
+        // Call the getUserLastLogin function on the LogUser model to retrieve last login date
+        LogUser.getUserLastLogin(req.query.userID,(err, data) => {
+            if (err) {
+                console.error("Error occurred while retrieving last login date: ", err);
+                res.status(500).send({
+                    message: "Some error occurred while retrieving last login date."
+                });
+            } else {
+                // Send the last login date as a response
+                res.send(data);
+            }
+        });
+    } catch (error) {
+        console.error("An error occurred: ", error);
+        res.status(500).send({
+            message: "Internal server error."
+        });
+    }
+};

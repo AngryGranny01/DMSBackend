@@ -12,6 +12,8 @@ CREATE TABLE User (
     email VARCHAR(255) Unique,
     passwordHash VARCHAR(255),
     salt VARCHAR(255),
+    publicKey VARCHAR(255),
+    orgEinheit VARCHAR(255),
     isAdmin BOOLEAN
 );
 
@@ -62,7 +64,7 @@ CREATE TABLE Project_User (
 );
 ------------------------------ SAMPLE DATA ----------------------------------
 -- Sample data for User table
-INSERT INTO User (userName, firstName, lastName, email, passwordHash, salt, isAdmin)
+INSERT INTO User (userName, firstName, lastName, email, passwordHash, salt, publicKey, orgEinheit, isAdmin)
 VALUES 
     ('admin', 'John', 'Doe', 'john@example.com', '29988a08bf4d3b1adc726e2574aee718d26469eaceab41e12213b239842f4014', 'f01fb63f89714891697161ba1bc08d28', 1),
     ('janedoe', 'Jane', 'Doe', 'jane.doe@example.com', '2a2052f84cb9b88ae368c9b2673ff3b4e3313beea15721837242f77cb7edfc5f', 'b5f14d2f4a29424e8b86aa1fcd7c2c07', 0),
