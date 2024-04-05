@@ -53,8 +53,8 @@ router.post("/users/updatePassword", userController.verifyToken);
 
 
 //-------------------------------------------- LOG USER --------------------------------------------------------------//
-router.get("/users/lastLogin", logUserController.lastLoginDate);
-router.get("/users/lastLogins", logUserController.lastLoginDates);
+//router.get("/user-logs/lastLogin", logUserController.lastLoginDate);
+router.get("/user-logs/lastLogins", logUserController.lastLoginDates);
 
 
 

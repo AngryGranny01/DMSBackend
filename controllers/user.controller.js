@@ -39,6 +39,7 @@ exports.create = async (req, res) => {
 // Retrieve all Users with last login date
 exports.getAllUsers = (req, res) => {
     // Retrieve all Users from the database .
+    console.log("Im Called")
     User.getAll(req.params.senderUserID, (err, data) => {
         if (err) {
             return res.status(500).send({

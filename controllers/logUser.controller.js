@@ -25,12 +25,11 @@ exports.create = async (req, res) => {
     });
 };
 
-exports.lastLoginDates = async (res) => {
+exports.lastLoginDates = async (req,res) => {
     try {
         // Call the getUsersLastLogin function on the LogUser model to retrieve last login dates
         LogUser.getUsersLastLogin((err, data) => {
             if (err) {
-                console.error("Error occurred while retrieving last login dates: ", err);
                 res.status(500).send({
                     message: "Some error occurred while retrieving last login dates."
                 });

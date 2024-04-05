@@ -65,6 +65,7 @@ User.create = async (userData, response) => {
     }
 };
 
+
 /**
  * Retrieves user data from the database, decrypts it, processes it, 
  * and then encrypts the data before sending it back to the caller.
@@ -76,42 +77,30 @@ User.getAll = async (senderUserID, response) => {
 
         // Query all users from the database
         const [userRows] = await conn.query("SELECT * FROM user where userID");
-
+        console.log("Sender ID: " + senderUserID)
+        //encrypt Data with public key of sender
+        const [publicKeySender] = await conn.query("Select publicKey from User WHERE userID=?", senderUserID)
+        console.log(publicKeySender[0].publicKey)
         // Array to store users 
-        const users = [];
+        const encryptedUsers = [];
 
         // Iterate through each user
         for (const userRow of userRows) {
             let role;
-
-            const decryptedUser = crypto.decryptUserDataRSA(userRow, userRow.privateKey)
             // Check user's role
-            const [managerRows] = await conn.query("SELECT COUNT(*) AS isProjectManager FROM projectmanager WHERE userID = ?", decryptedUser.userID);
-            if (decryptedUser.isAdmin === "1") {
+            const [managerRows] = await conn.query("SELECT COUNT(*) AS isProjectManager FROM projectmanager WHERE userID = ?", userRow.userID);
+            if (userRow.isAdmin === 1) {
                 role = Role.ADMIN;
             } else if (managerRows[0].isProjectManager === 1) {
                 role = Role.PROJECT_MANAGER;
             } else {
                 role = Role.USER;
             }
+            const user = encryptUser(userRow, role, publicKeySender[0].publicKey)
 
-            // Create user object
-            const user = new User({
-                userID: decryptedUser.userID,
-                userName: decryptedUser.userName,
-                firstName: decryptedUser.firstName,
-                lastName: decryptedUser.lastName,
-                email: decryptedUser.email,
-                publicKey: decryptedUser.publicKey,
-                orgEinheit: decryptedUser.orgEinheit
-            }, role);
-            users.push(user);
+            encryptedUsers.push(user);
         }
 
-        //encrypt Data with public key of sender
-        const [publicKeySender] = await conn.query("Select publicKey from User WHERE userID=?", senderUserID)
-
-        encryptedUsers = crypto.encryptRSA(JSON.stringify(users), publicKeySender)
         response(null, encryptedUsers);
     } catch (error) {
         console.error("Error retrieving data from database:", error);
@@ -360,16 +349,8 @@ User.checkEmailAndPassword = async (email, password, response) => {
             role = Role.USER;
         }
 
-        console.log("Public Key:"+ userData.publicKey)
         // Create the user object
-        const user = new User({
-            userID: crypto.encryptRSA(userData.userID, userData.publicKey),
-            userName: crypto.encryptRSA(userData.userName, userData.publicKey),
-            firstName: crypto.encryptRSA(userData.userName, userData.publicKey),
-            lastName: crypto.encryptRSA(userData.lastName, userData.publicKey),
-            email: crypto.encryptRSA(userData.email, userData.publicKey),
-            orgEinheit: crypto.encryptRSA(userData.orgEinheit, userData.publicKey),
-        }, crypto.encryptRSA(role, userData.publicKey));
+        const user = encryptUser(userData, role, userData.publicKey)
 
         response(null, user);
 
@@ -381,6 +362,32 @@ User.checkEmailAndPassword = async (email, password, response) => {
         }
     }
 };
+
+function encryptUser(userData, role, publicKey) {
+    const encryptedUser = {
+        userID: userData.userID,
+        userName: crypto.encryptRSA(userData.userName, publicKey),
+        firstName: crypto.encryptRSA(userData.firstName, publicKey),
+        lastName: crypto.encryptRSA(userData.lastName, publicKey),
+        email: crypto.encryptRSA(userData.email, publicKey),
+        orgEinheit: crypto.encryptRSA(userData.orgEinheit, publicKey),
+        role: crypto.encryptRSA(role, publicKey) 
+    };
+    return encryptedUser;
+}
+
+function decryptUser(encryptedUserData, privateKey) {
+    const decryptedUser = {
+        userID: encryptedUserData.userID,
+        userName: crypto.decryptRSA(encryptedUserData.userName, privateKey),
+        firstName: crypto.decryptRSA(encryptedUserData.firstName, privateKey),
+        lastName: crypto.decryptRSA(encryptedUserData.lastName, privateKey),
+        email: crypto.decryptRSA(encryptedUserData.email, privateKey),
+        orgEinheit: crypto.decryptRSA(encryptedUserData.orgEinheit, privateKey),
+        role: crypto.decryptRSA(encryptedUserData.role, privateKey)
+    };
+    return decryptedUser;
+}
 
 User.updatePassword = async (userID, passwordHash, salt, publicKey, response) => {
     let conn;

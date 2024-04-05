@@ -8,7 +8,6 @@ router.use(express.static('public'))
 router.use(cors());
 router.use(parser.json())
 
-
 var routesDMS = require("./router");
 router.use('/DMSSystem', routesDMS)
 /////
