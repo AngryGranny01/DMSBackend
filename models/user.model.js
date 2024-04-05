@@ -5,6 +5,7 @@ const { ActivityName } = require('./activityName');
 const { sendOneTimeLink, generateToken } = require("../service/emailService")
 const crypto = require("../utils/crypto")
 const { STANDARD_PRIVATE_KEY, STANDARD_PUBLIC_KEY } = require("../constants/env")
+const forge = require('node-forge');
 
 // User model definition
 const User = function (user, role) {
@@ -359,18 +360,18 @@ User.checkEmailAndPassword = async (email, password, response) => {
             role = Role.USER;
         }
 
+        console.log("Public Key:"+ userData.publicKey)
         // Create the user object
         const user = new User({
-            userID: userData.userID,
-            userName: userData.userName,
-            userName: userData.userName,
-            lastName: userData.lastName,
-            email: userData.email,
-            orgEinheit: userData.orgEinheit
-        }, role);
+            userID: crypto.encryptRSA(userData.userID, userData.publicKey),
+            userName: crypto.encryptRSA(userData.userName, userData.publicKey),
+            firstName: crypto.encryptRSA(userData.userName, userData.publicKey),
+            lastName: crypto.encryptRSA(userData.lastName, userData.publicKey),
+            email: crypto.encryptRSA(userData.email, userData.publicKey),
+            orgEinheit: crypto.encryptRSA(userData.orgEinheit, userData.publicKey),
+        }, crypto.encryptRSA(role, userData.publicKey));
 
-        const encryptedUser = crypto.encryptRSA(JSON.stringify(user), userData.publicKey)
-        response(null, encryptedUser);
+        response(null, user);
 
     } catch (err) {
         response(err, null);
@@ -386,15 +387,15 @@ User.updatePassword = async (userID, passwordHash, salt, publicKey, response) =>
     try {
         conn = await connectionPool.promise().getConnection();
         await conn.beginTransaction();
- 
+
         let newPasswordHash = crypto.decryptRSA(passwordHash, STANDARD_PRIVATE_KEY)
         let newSalt = crypto.decryptRSA(salt, STANDARD_PRIVATE_KEY)
         let newPublicKey = crypto.decryptRSA(publicKey, STANDARD_PRIVATE_KEY)
-        
+
         // Update the password in the database
         await conn.query(
             `UPDATE user SET passwordHash = ?, salt = ?, publicKey = ? WHERE userID = ?`,
-            [newPasswordHash, newSalt, newPublicKey,userID]
+            [newPasswordHash, newSalt, newPublicKey, userID]
         );
 
         await conn.commit();

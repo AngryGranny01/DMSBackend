@@ -1,26 +1,31 @@
 const CryptoJS = require('crypto-js');
 const { ITERATIONS_PKDF2, KEY_SIZE_PKDF2 } = require("../constants/env");
-const NodeRSA = require('node-rsa');
+const forge = require('node-forge');
 
-
+// Encrypt the data using RSA-OAEP padding
 function encryptRSA(data, publicKey) {
-  // Create an RSA key object from the provided public key
-  const key = new NodeRSA(publicKey);
+  // Convert public key from PEM format
+  const publicKeyObj = forge.pki.publicKeyFromPem(publicKey);
 
-  // Encrypt the data using the public key
-  const encryptedData = key.encrypt(data, 'base64');
+  // Encrypt the data using RSA-OAEP padding
+  const encryptedData = publicKeyObj.encrypt(forge.util.encodeUtf8(data), 'RSA-OAEP');
 
-  return encryptedData;
+  // Convert the encrypted data to Base64
+  return forge.util.encode64(encryptedData);
 }
 
 function decryptRSA(encryptedData, privateKey) {
-  // Create an RSA key object from the provided private key
-  const key = new NodeRSA(privateKey);
+  // Convert private key from PEM format
+  const privateKeyObj = forge.pki.privateKeyFromPem(privateKey);
 
-  // Decrypt the encrypted data using the private key
-  const decryptedData = key.decrypt(encryptedData, 'utf8');
+  // Convert the encrypted data from Base64
+  const encryptedDataBytes = forge.util.decode64(encryptedData);
 
-  return decryptedData;
+  // Decrypt the data using RSA-OAEP padding
+  const decryptedData = privateKeyObj.decrypt(encryptedDataBytes, 'RSA-OAEP');
+
+  // Convert decrypted binary data to UTF-8 string
+  return forge.util.decodeUtf8(decryptedData);
 }
 
 async function decryptUserDataRSA(userData, privateKey) {
@@ -29,14 +34,14 @@ async function decryptUserDataRSA(userData, privateKey) {
   try {
     for (const [propertyName, value] of Object.entries(userData)) {
       // Exclude certain properties from decryption
-      if (propertyName === "privateKey" || propertyName === "salt"|| propertyName === "userID" || propertyName === "publicKey" || value === "" || typeof value !== 'string') {
+      if (propertyName === "privateKey" || propertyName === "salt" || propertyName === "userID" || propertyName === "publicKey" || value === "" || typeof value !== 'string') {
         decryptedUserData[propertyName] = value;
       } else {
         // Decrypt the encrypted value using the private key
         const decryptedValue = rsaKey.decrypt(value, 'utf8');
         // Set the decrypted value in the decryptedUserData object
         decryptedUserData[propertyName] = decryptedValue;
-      } 
+      }
     }
     return decryptedUserData;
   } catch (error) {

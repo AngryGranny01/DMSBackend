@@ -43,7 +43,7 @@ router.delete("/projectManager", projectManagerController.delete);
 router.post("/users", userController.create);
 router.get("/users/checkEmailExist", userController.checkIfEmailExist);
 router.get("/users/checkUsernameExist", userController.checkIfUsernameExist);
-router.post("/users/login", userController.checkLogin);
+router.get("/users/login", userController.checkLogin);
 router.delete("/users/:userID", userController.delete);
 router.get("/users/findOne/:userID", userController.findOne);
 router.get("/users/findSalt", userController.findSalt);
