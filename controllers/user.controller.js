@@ -11,20 +11,9 @@ exports.create = async (req, res) => {
             message: "Content can not be empty!"
         });
     }
-    const userData = {
-        userName: req.body.userName,
-        firstName: req.body.firstName,
-        lastName: req.body.lastName,
-        email: req.body.email,
-        orgEinheit: req.body.orgEinheit,
-        isAdmin: req.body.isAdmin,
-        isProjectManager: req.body.isProjectManager,
-        passwordHash: STANDARD_PRIVATE_KEY,
-        publicKey: STANDARD_PUBLIC_KEY
-    }
 
     // Call the create function on the User model to save the new user
-    User.create(userData, (err, data) => {
+    User.create(req.body, (err, data) => {
         if (err) {
             return res.status(500).send({
                 message: err.message || "Some error occurred while creating the User."
@@ -153,7 +142,7 @@ exports.checkIfUsernameExist = async (req, res) => {
             message: "Username is required"
         });
     }
-
+    console.log(req.query)
     User.isUsernameAlreadyUsed(req.query.username, (err, data) => {
         if (err) {
             console.error("Error occurred while checking if username exists:", err);
