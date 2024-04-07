@@ -59,7 +59,7 @@ exports.findSalt = (req, res) => {
 
 // Retrieve a specific User by ID
 exports.findOne = (req, res) => {
-    User.findByID(req.params.id, (err, user) => {
+    User.findByID(req.params.userID, (err, user) => {
         if (err) {
             return res.status(500).send({
                 message: err.message || 'An error occurred while retrieving the User.'
@@ -96,7 +96,7 @@ exports.update = (req, res) => {
 // Delete a User by ID
 exports.delete = (req, res) => {
     // Call the remove method of the User model with the userId query parameter
-    User.remove(req.query.userID, (err, data) => {
+    User.remove(req.params.userID, (err, data) => {
         if (err) {
             console.error("Error occurred while deleting user:", err);
             return res.status(500).send({
@@ -157,25 +157,26 @@ exports.checkIfUsernameExist = async (req, res) => {
 
 exports.checkLogin = async (req, res) => {
     // Validate the presence of required parameters
-    if (!req.query.email || !req.query.passwordHash) {
+    if (!req.query.email) {
         return res.status(400).send({
             message: "Email and passwordHash are required"
         });
     }
 
     // Call the checkEmailAndPassword function to validate login credentials
-    User.checkEmailAndPassword(req.query.email, req.query.passwordHash, (err, data) => {
+    User.checkPassword(req.query.email, (err, data) => {
         if (err) {
             console.error("Error occurred while checking for Email and Password exists:", err);
             return res.status(500).send({
                 message: "Some error occurred while checking if the User exists."
             });
         } else {
-            // If no error, send the result (either user data or null if not found)
+            // If no error, send the result (either password or null if not found)
             res.send(data);
         }
     });
 };
+
 
 //verifys the token and then updates the user password
 exports.verifyToken = async (req, res) => {

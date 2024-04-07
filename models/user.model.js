@@ -6,6 +6,7 @@ const { sendOneTimeLink, generateToken } = require("../service/emailService")
 const crypto = require("../utils/crypto")
 const { STANDARD_PRIVATE_KEY, STANDARD_PUBLIC_KEY } = require("../constants/env")
 const forge = require('node-forge');
+const { response } = require("express");
 
 // User model definition
 const User = function (user, role) {
@@ -33,10 +34,10 @@ User.create = async (userData, response) => {
         let isAdmin = false
         let isProjectManager = false
 
-        if(decryptedUserData.role === Role.ADMIN){
+        if (decryptedUserData.role === Role.ADMIN) {
             isAdmin = true
             isProjectManager = true
-        }if(decryptedUserData.role === Role.PROJECT_MANAGER){
+        } if (decryptedUserData.role === Role.PROJECT_MANAGER) {
             isProjectManager = true
         }
         const user = {
@@ -44,7 +45,7 @@ User.create = async (userData, response) => {
             firstName: decryptedUserData.firstName,
             lastName: decryptedUserData.lastName,
             email: decryptedUserData.email,
-            orgEinheit:decryptedUserData.orgEinheit,
+            orgEinheit: decryptedUserData.orgEinheit,
             isAdmin: isAdmin,
             passwordHash: "",
             salt: "",
@@ -127,70 +128,16 @@ User.getAll = async (senderUserID, response) => {
     }
 };
 
-User.findByID = async (senderUserID, userID, response) => {
-    let conn;
-    try {
-        conn = await connectionPool.promise().getConnection();
-
-        // Query the database to find the user by userID
-        const [rows] = await conn.query('SELECT * FROM user WHERE userID = ?', [userID]);
-
-        // If the user is found, return it
-        if (rows.length > 0) {
-            const userData = rows[0];
-            let decryptedUser = decryptUser(userData, userData.privateKey)
-
-            // Determine the user's role
-            const [managerRows] = await conn.query("SELECT COUNT(*) AS isProjectManager FROM projectmanager WHERE userID = ?", userData.userID);
-
-
-            // Create the user object
-            const user = new User({
-                userID: decryptedUser.userID,
-                username: decryptedUser.userName,
-                firstname: decryptedUser.firstName,
-                lastname: decryptedUser.lastName,
-                email: decryptedUser.email,
-                publicKey: decryptedUser.publicKey,
-                passwordHash: decryptedUser.passwordHash,
-                orgEinheit: decryptedUser.orgEinheit
-            }, role);
-
-            //encrypt Data with public key of sender
-            const [publicKeySender] = await conn.query("Select publicKey from User WHERE userID=?", senderUserID)
-            encryptedUser = crypto.encryptRSA(JSON.stringify(user), publicKeySender)
-
-            response(null, encryptedUser);
-        } else {
-            // User not found
-            const error = { message: `User with ID ${userID} not found` };
-            response(error, null);
-        }
-    } catch (error) {
-        console.error("Error retrieving user from database:", error);
-        const dbError = { message: "Error retrieving user from database" };
-        response(dbError, null);
-    } finally {
-        if (conn) {
-            conn.release();
-        }
-    }
-};
-
-User.updateByID = async (senderUserID, user, response) => {
+User.updateByID = async (user, response) => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
         await conn.beginTransaction();
-
-        //decrypt Data with private key of sender
-        const [publicKeySender] = await conn.query("Select passwordHash from User WHERE userID=?", senderUserID)
-        const decryptedUser = crypto.decryptRSA(user, publicKeySender)
-
-        const encryptedUser = crypto.encryptUserDataRSA(decryptedUser)
-
-        let isAdmin = user.role === Role.ADMIN ? true : false;
-
+        console.log("Salt: " + user.salt)
+        const decryptedUserData = decryptUser(user, STANDARD_PRIVATE_KEY)
+        let decryptedPasswordHash = crypto.decryptRSA(user.passwordHash, STANDARD_PRIVATE_KEY)
+        let isAdmin = decryptedUserData.role === Role.ADMIN ? true : false;
+        console.log(user.publicKey)
         // Update the user in the database
         await conn.query(
             `UPDATE user 
@@ -206,17 +153,17 @@ User.updateByID = async (senderUserID, user, response) => {
                     orgEinheit = ? 
                 WHERE 
                     userID = ?;`,
-            [encryptedUser.userName, encryptedUser.firstName, encryptedUser.lastName, encryptedUser.email, encryptedUser.passwordHash, encryptedUser.salt, encryptedUser.publicKey, encryptedUser.isAdmin, encryptedUser.orgEinheit, encryptedUser.userID]
+            [decryptedUserData.userName, decryptedUserData.firstName, decryptedUserData.lastName, decryptedUserData.email, decryptedPasswordHash, user.salt, user.publicKey, isAdmin, decryptedUserData.orgEinheit, decryptedUserData.userID]
         );
 
         // Check if the user is a project manager
-        if (decryptedUser.role === Role.PROJECT_MANAGER || decryptedUser.role === Role.ADMIN) {
+        if (decryptedUserData.role === Role.PROJECT_MANAGER || decryptedUserData.role === Role.ADMIN) {
             // Check if the user is already in the projectmanager table
-            const [managerRows] = await conn.query("SELECT * FROM projectmanager WHERE userID = ?", decryptedUser.userID);
+            const [managerRows] = await conn.query("SELECT * FROM projectmanager WHERE userID = ?", decryptedUserData.userID);
 
             // If not, insert the user into the projectmanager table
             if (managerRows.length === 0) {
-                await conn.query("INSERT INTO projectmanager (userID) VALUES (?)", [decryptedUser.userID]);
+                await conn.query("INSERT INTO projectmanager (userID) VALUES (?)", [decryptedUserData.userID]);
                 console.log("User successfully added as a project manager.");
             } else {
                 console.log("User is already a project manager.");
@@ -234,7 +181,7 @@ User.updateByID = async (senderUserID, user, response) => {
         WHERE 
             Project_User.userID = ?;`
 
-        const [projectKeys] = await conn.query(projectKeyQuery, decryptedUser.userID);
+        const [projectKeys] = await conn.query(projectKeyQuery, decryptedUserData.userID);
 
         for (const projectKeyRow of projectKeys) {
             //get public key for every user
@@ -262,7 +209,7 @@ User.remove = async (userID, response) => {
     try {
         conn = await connectionPool.promise().getConnection();
         await conn.beginTransaction();
-
+        console.log(userID)
         // Delete user from activitylog table
         await conn.query("DELETE FROM activitylog WHERE userID = ?", userID);
         await conn.query("DELETE FROM activitylogUser WHERE userID = ?", userID);
@@ -335,35 +282,62 @@ User.isUsernameAlreadyUsed = async (username, response) => {
     }
 };
 
-User.checkEmailAndPassword = async (email, password, response) => {
+User.checkPassword = async (email, response) => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
-        const query = "SELECT * FROM user WHERE email = ? AND passwordHash = ?";
-        const [rows] = await conn.query(query, [email, password]);
+        const query = "SELECT passwordHash,publicKey,userID FROM user WHERE email = ?";
+        const [rows] = await conn.query(query, email);
 
         // If no user found, return null
         if (rows.length === 0) {
             return response(null, null);
         }
-        let userData = rows[0]
+        let encryptedPassword = crypto.encryptRSA(rows[0].passwordHash, rows[0].publicKey)
 
-        // Determine user's role
-        let role;
-        let [managerRows] = await conn.query("SELECT COUNT(*) AS isProjectManager FROM projectmanager WHERE userID = ?", userData.userID);
-        if (userData.isAdmin === 1) {
-            role = Role.ADMIN;
-        } else if (managerRows[0].isProjectManager === 1) {
-            role = Role.PROJECT_MANAGER;
-        } else {
-            role = Role.USER;
+        response(null, { passwordHash: encryptedPassword, userID: rows[0].userID });
+
+    } catch (err) {
+        response(err, null);
+    } finally {
+        if (conn) {
+            conn.release();
         }
+    }
+}
 
-        // Create the user object
-        const user = encryptUser(userData, role, userData.publicKey)
+User.findByID = async (userID, response) => {
+    let conn;
+    try {
+        conn = await connectionPool.promise().getConnection();
+        const query = "SELECT * FROM user WHERE userID = ?";
+        const [rows] = await conn.query(query, userID);
 
-        response(null, user);
+        // If no user found, return null
+        if (rows.length > 0) {
 
+            let userData = rows[0]
+
+            // Determine user's role
+            let role;
+            let [managerRows] = await conn.query("SELECT COUNT(*) AS isProjectManager FROM projectmanager WHERE userID = ?", userData.userID);
+            if (userData.isAdmin === 1) {
+                role = Role.ADMIN;
+            } else if (managerRows[0].isProjectManager === 1) {
+                role = Role.PROJECT_MANAGER;
+            } else {
+                role = Role.USER;
+            }
+
+            // Create the user object
+            const user = encryptUser(userData, role, userData.publicKey)
+
+            response(null, user);
+        } else {
+            // User not found
+            const error = { message: `User with ID ${userID} not found` };
+            response(error, null);
+        }
     } catch (err) {
         response(err, null);
     } finally {
@@ -388,7 +362,7 @@ function encryptUser(userData, role, publicKey) {
 }
 
 function decryptUser(encryptedUserData, privateKey) {
-    console.log(encryptedUserData)
+    console.log(encryptedUserData.userName)
     const decryptedUser = {
         userID: encryptedUserData.userID,
         userName: crypto.decryptRSA(encryptedUserData.userName, privateKey),
