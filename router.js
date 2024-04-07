@@ -47,11 +47,10 @@ router.get("/users/login", userController.checkLogin);
 router.get("/user/:userID", userController.findOne)
 
 router.delete("/users/:userID", userController.delete);
-router.get("/users/findOne/:userID", userController.findOne);
 router.get("/users/findSalt", userController.findSalt);
 router.get("/users/:senderUserID", userController.getAllUsers);
 router.put("/users", userController.update);
-router.post("/users/updatePassword", userController.verifyToken);
+router.put("/verifyToken", userController.verifyToken);
 
 
 //-------------------------------------------- LOG USER --------------------------------------------------------------//

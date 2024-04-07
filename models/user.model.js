@@ -93,10 +93,8 @@ User.getAll = async (senderUserID, response) => {
 
         // Query all users from the database
         const [userRows] = await conn.query("SELECT * FROM user where userID");
-        console.log("Sender ID: " + senderUserID)
         //encrypt Data with public key of sender
         const [publicKeySender] = await conn.query("Select publicKey from User WHERE userID=?", senderUserID)
-        console.log(publicKeySender[0].publicKey)
         // Array to store users 
         const encryptedUsers = [];
 
@@ -133,11 +131,10 @@ User.updateByID = async (user, response) => {
     try {
         conn = await connectionPool.promise().getConnection();
         await conn.beginTransaction();
-        console.log("Salt: " + user.salt)
+        console.log(user.publicKey)
         const decryptedUserData = decryptUser(user, STANDARD_PRIVATE_KEY)
         let decryptedPasswordHash = crypto.decryptRSA(user.passwordHash, STANDARD_PRIVATE_KEY)
         let isAdmin = decryptedUserData.role === Role.ADMIN ? true : false;
-        console.log(user.publicKey)
         // Update the user in the database
         await conn.query(
             `UPDATE user 
@@ -209,7 +206,6 @@ User.remove = async (userID, response) => {
     try {
         conn = await connectionPool.promise().getConnection();
         await conn.beginTransaction();
-        console.log(userID)
         // Delete user from activitylog table
         await conn.query("DELETE FROM activitylog WHERE userID = ?", userID);
         await conn.query("DELETE FROM activitylogUser WHERE userID = ?", userID);
@@ -295,7 +291,7 @@ User.checkPassword = async (email, response) => {
         }
         let encryptedPassword = crypto.encryptRSA(rows[0].passwordHash, rows[0].publicKey)
 
-        response(null, { passwordHash: encryptedPassword, userID: rows[0].userID });
+        response(null, { passwordHash: encryptedPassword, userID: rows[0].userID, publicKey: rows[0].publicKey });
 
     } catch (err) {
         response(err, null);
@@ -362,7 +358,6 @@ function encryptUser(userData, role, publicKey) {
 }
 
 function decryptUser(encryptedUserData, privateKey) {
-    console.log(encryptedUserData.userName)
     const decryptedUser = {
         userID: encryptedUserData.userID,
         userName: crypto.decryptRSA(encryptedUserData.userName, privateKey),
@@ -379,24 +374,26 @@ User.updatePassword = async (userID, passwordHash, salt, publicKey, response) =>
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
-        await conn.beginTransaction();
+        let [res] = await conn.query('SELECT publicKey FROM user WHERE userID = ?', [userID]);
 
-        let newPasswordHash = crypto.decryptRSA(passwordHash, STANDARD_PRIVATE_KEY)
-        let newSalt = crypto.decryptRSA(salt, STANDARD_PRIVATE_KEY)
-        let newPublicKey = crypto.decryptRSA(publicKey, STANDARD_PRIVATE_KEY)
-
-        // Update the password in the database
-        await conn.query(
-            `UPDATE user SET passwordHash = ?, salt = ?, publicKey = ? WHERE userID = ?`,
-            [newPasswordHash, newSalt, newPublicKey, userID]
-        );
-
-        await conn.commit();
-        response(null, `User with ID ${userID} updated successfully`);
+        if (res[0].publicKey === STANDARD_PUBLIC_KEY) {
+            await conn.beginTransaction();
+            // Update the password in the database
+            await conn.query(
+                `UPDATE user SET passwordHash = ?, salt = ?, publicKey = ? WHERE userID = ?`,
+                [passwordHash, salt, publicKey, userID]
+            );
+            await conn.commit();
+            response(null, `User with ID ${userID} updated successfully`);
+        } else {
+            const errorMessage = "The user password has already been updated.";
+            console.error(errorMessage);
+            response(errorMessage, null);
+            return;
+        }
     } catch (error) {
         console.error("Error occurred while updating users: ", error);
         await conn.rollback();
-
         response(`Error updating user with ID ${userID}`, null);
     } finally {
         if (conn) {
@@ -404,6 +401,7 @@ User.updatePassword = async (userID, passwordHash, salt, publicKey, response) =>
         }
     }
 };
+
 
 
 User.findSaltByEmail = async (email, response) => {

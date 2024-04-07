@@ -15,7 +15,7 @@ async function sendOneTimeLink(toEmail, token) {
     from: EMAIL_ENV,
     to: toEmail,
     subject: 'Email Verification',
-    html: `<p>Please use the following <a href="http://localhost:4200/setPassword?token=${encodeURIComponent(token)}">link</a> to verify your email. Link expires in 1 hour.</p>`,
+    html: `<p>Please use the following <a href="http://localhost:4200/setPassword?token=${encodeURIComponent(token)}">link</a> to set your password`,
   };
   await transporter.sendMail(mailOptions);
   console.log('Email sent successfully!');
@@ -23,11 +23,10 @@ async function sendOneTimeLink(toEmail, token) {
 
 // Generate token for email verification
 function generateToken(uniqueID) {
-  const expiry = '1h'; // Token expires in 1 hour
   const secretKey = JWT_SECRET; // Use a secure, environment-specific key
 
   const payload = { userID: uniqueID }; // Payload containing user ID
-  return jwt.sign(payload, secretKey, { expiresIn: expiry });
+  return jwt.sign(payload, secretKey);
 }
 
 module.exports = {
