@@ -11,7 +11,6 @@ var router = require("express").Router();
 
 //-------------------------------------------- Create --------------------------------------------------------------//
 router.post("/projects", projectController.create);
-router.post("/user-logs", logUserController.create);
 router.post("/project-logs", logController.create);
 
 //-------------------------------------------- Retrieve All--------------------------------------------------------------//
@@ -54,8 +53,8 @@ router.put("/verifyToken", userController.verifyToken);
 
 
 //-------------------------------------------- LOG USER --------------------------------------------------------------//
-//router.get("/user-logs/lastLogin", logUserController.lastLoginDate);
 router.get("/user-logs/lastLogins", logUserController.lastLoginDates);
+router.post("/user-logs", logUserController.create);
 
 
 

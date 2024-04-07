@@ -1,5 +1,7 @@
 const { connectionPool } = require("./db");
 const { ActivityName } = require('./activityName');
+const crypto = require("../utils/crypto");
+const { STANDARD_PRIVATE_KEY } = require("../constants/env");
 
 const LogUser = function (log, timeStamp, user) {
     this.logUserID = log.logUserID;
@@ -91,13 +93,16 @@ LogUser.create = async (log, result) => {
     try {
         conn = await connectionPool.promise().getConnection();
         await conn.beginTransaction();
+        let decryptedActDesc = crypto.decryptRSA(log.activityDescription, STANDARD_PRIVATE_KEY)
+        let decryptedActName = crypto.decryptRSA(log.activityName, STANDARD_PRIVATE_KEY)
+        let decrypteduserID = crypto.decryptRSA(log.userID, STANDARD_PRIVATE_KEY)
 
         // Insert LogUser data into the database
         const insertLogSql = 'INSERT INTO activityLogUser SET ?';
         const logData = {
-            activityDescription: log.activityDescription,
-            activityName: log.activityName,
-            userID: log.userID,
+            activityDescription: decryptedActDesc,
+            activityName: decryptedActName,
+            userID: decrypteduserID,
             timeStampUser: new Date()
         };
         const [rowsLog, fieldsUser] = await conn.query(insertLogSql, logData);

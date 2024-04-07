@@ -29,7 +29,6 @@ exports.create = async (req, res) => {
 // Retrieve all Users with last login date
 exports.getAllUsers = (req, res) => {
     // Retrieve all Users from the database .
-    console.log("Im Called")
     User.getAll(req.params.senderUserID, (err, data) => {
         if (err) {
             return res.status(500).send({
@@ -143,7 +142,6 @@ exports.checkIfUsernameExist = async (req, res) => {
             message: "Username is required"
         });
     }
-    console.log(req.query)
     User.isUsernameAlreadyUsed(req.query.username, (err, data) => {
         if (err) {
             console.error("Error occurred while checking if username exists:", err);
@@ -181,8 +179,6 @@ exports.checkLogin = async (req, res) => {
 
 //verifys the token and then updates the user password
 exports.verifyToken = async (req, res) => {
-    console.log("Token:")
-    console.log(req.body)
     const token = req.body.token
     const passwordHash = crypto.decryptRSA(req.body.passwordHash,STANDARD_PRIVATE_KEY);
     const salt = req.body.salt;
