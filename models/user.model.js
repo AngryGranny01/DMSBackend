@@ -375,7 +375,7 @@ User.updatePassword = async (userID, passwordHash, salt, publicKey, response) =>
     try {
         conn = await connectionPool.promise().getConnection();
         let [res] = await conn.query('SELECT publicKey FROM user WHERE userID = ?', [userID]);
-
+        console.log(res[0].publicKey)
         if (res[0].publicKey === STANDARD_PUBLIC_KEY) {
             await conn.beginTransaction();
             // Update the password in the database
@@ -389,7 +389,6 @@ User.updatePassword = async (userID, passwordHash, salt, publicKey, response) =>
             const errorMessage = "The user password has already been updated.";
             console.error(errorMessage);
             response(errorMessage, null);
-            return;
         }
     } catch (error) {
         console.error("Error occurred while updating users: ", error);
