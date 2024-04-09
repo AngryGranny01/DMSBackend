@@ -1,5 +1,5 @@
 const { connectionPool } = require("./db");
-const { convertTimeStampToDateTime } = require("../utils/convertDateTime");
+const { convertTimeStamp } = require("../utils/convertDateTime");
 const crypto = require("../utils/crypto")
 
 const Log = function (log, timeStamp, user) {
@@ -72,7 +72,7 @@ Log.findProjectLogsByID = async (projectID, result) => {
                 // Process each log row
 
                 for (let logRow of logRows) {
-                    let timeStamp = convertTimeStampToDateTime(logRow.timeStampLog);
+                    let timeStamp = convertTimeStamp(logRow.timeStampLog);
 
                     const log = {
                         logUserID: logRow.logID,
@@ -144,7 +144,7 @@ Log.findByID = async (userID, result) => {
 
             // Process log data
             for (let logRow of logRows) {
-                let timeStamp = convertTimeStampToDateTime(logRow.timeStamp);
+                let timeStamp = convertTimeStamp(logRow.timeStamp);
 
                 const log = {
                     logUserID: logRow.logID,

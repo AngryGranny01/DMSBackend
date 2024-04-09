@@ -1,4 +1,4 @@
-const convertTimeStampToDateTime = (timeStamp) => {
+const convertTimeStamp = (timeStamp) => {
     const date = {
         year: timeStamp.getFullYear(),
         month: timeStamp.getMonth() + 1, // Adding 1 because getMonth() returns zero-based month index
@@ -6,7 +6,7 @@ const convertTimeStampToDateTime = (timeStamp) => {
         hour: timeStamp.getHours(),
         minute: timeStamp.getMinutes(),
     }
-    return new DateTime(date);
+    return date;
 }
 
-module.exports = { convertTimeStampToDateTime };
+module.exports = { convertTimeStamp };

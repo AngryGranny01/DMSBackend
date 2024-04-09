@@ -25,10 +25,28 @@ exports.create = async (req, res) => {
     });
 };
 
+// Find all Logs by User ID
+exports.findUserLogs = (req, res) => {
+    LogUser.findByID(req.params.userID, (err, userLogs) => {
+        if (err) {
+            res.status(500).send({
+                message: err.message || 'An error occurred while retrieving the User Log.'
+            });
+        } else if (!userLogs || userLogs.length === 0) {
+            res.status(404).send({
+                message: `User Log with ID ${req.query.userID} was not found.`
+            });
+        } else {
+            res.send(userLogs);
+        }
+    });
+};
+
 exports.lastLoginDates = async (req,res) => {
+    let senderID = req.params.userID
     try {
         // Call the getUsersLastLogin function on the LogUser model to retrieve last login dates
-        LogUser.getUsersLastLogin((err, data) => {
+        LogUser.getUsersLastLogin(senderID,(err, data) => {
             if (err) {
                 res.status(500).send({
                     message: "Some error occurred while retrieving last login dates."

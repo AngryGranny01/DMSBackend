@@ -13,79 +13,6 @@ const LogUser = function (log, timeStamp, user) {
     this.lastName = user.lastName;
 };
 
-LogUser.getUsersLastLogin = async (result) => {
-    let conn;
-    try {
-        conn = await connectionPool.promise().getConnection();
-        // Query to find the newest login date for all users
-        const selectLastLoginSql = `
-        SELECT 
-            userID,
-            MAX(timeStampUser) AS newestDate
-        FROM 
-            ActivityLogUser
-        WHERE 
-            activityName IN ('LOGIN', 'CREATE_USER')
-        GROUP BY 
-            userID;
-        `;
-
-        const [dateRows] = await conn.query(selectLastLoginSql);
-        const lastLoginDates = dateRows.map(dateRow => ({
-            date: dateRow.newestDate,
-            userID: dateRow.userID
-        }));
-
-        result(null, lastLoginDates);
-    } catch (error) {
-        console.error("Error occurred while fetching users' last login dates: ", error);
-        result(error, null);
-    } finally {
-        if (conn) {
-            conn.release();
-        }
-    }
-}
-
-LogUser.getUserLastLogin = async (userID, result) => {
-    let conn;
-    try {
-        conn = await connectionPool.promise().getConnection();
-        // Query to find the newest login date for a specific user
-        const selectLastLoginSql = `
-        SELECT 
-            MAX(timeStampUser) AS newestDate
-        FROM 
-            ActivityLogUser
-        WHERE 
-            userID = ? 
-            AND activityName IN ('LOGIN', 'CREATE_USER')
-        GROUP BY 
-            userID;
-        `;
-
-        const [dateRows] = await conn.query(selectLastLoginSql, [userID]);
-        
-        // Check if any date is found
-        if (dateRows.length > 0) {
-            const lastLoginDate = dateRows[0].newestDate;
-            result(null, {userID: userID, lastLoginDate: lastLoginDate });
-        } else {
-            // If no date found for the user
-            result({ message: "No login date found for the user." }, null);
-        }
-    } catch (error) {
-        console.error("Error occurred while fetching user's last login date: ", error);
-        result(error, null);
-    } finally {
-        if (conn) {
-            conn.release();
-        }
-    }
-}
-
-
-
 
 // Create a new LogUser entry
 LogUser.create = async (log, result) => {
@@ -119,6 +46,113 @@ LogUser.create = async (log, result) => {
         }
     }
 };
+
+// Find all Logs by User ID
+LogUser.findByID = async (userID, result) => {
+    let conn;
+    try {
+        conn = await connectionPool.promise().getConnection();
+        //encrypt Data with public key of sender
+        const [publicKeySender] = await conn.query("Select publicKey from User WHERE userID=?", userID)
+
+        const queryUserLog = `
+            SELECT logUserID AS logID,
+                    activityDescription,
+                    activityName,
+                    userID,
+                    NULL AS projectID, -- Add NULL value to match the number of columns
+                    timeStampUser AS timeStamp
+            FROM ActivityLogUser
+            WHERE userID = ?
+
+            UNION
+
+            SELECT logID,
+                    activityDescription,
+                    activityName,
+                    userID,
+                    projectID,
+                    timeStampLog AS timeStamp
+            FROM ActivityLog
+            WHERE userID = ?
+
+            ORDER BY timeStamp DESC;`;
+
+        // Query the database to find the user logs by userID
+        const [logRows] = await conn.query(queryUserLog, [userID, userID]);
+        const usersLog = [];
+
+        // Get Name of the Log Create
+        let [userRows] = await conn.query("Select firstName, lastName from User where userID = ?", userID);
+
+        if (userRows.length > 0) {
+            let user = userRows[0];
+            const publicKey = publicKeySender[0].publicKey
+            // Process log data
+            for (let logRow of logRows) {
+                const log = {
+                    logID: crypto.encryptRSA(logRow.logID, publicKey),
+                    userID: crypto.encryptRSA(logRow.userID, publicKey),
+                    activityName: crypto.encryptRSA(logRow.activityName, publicKey),
+                    activityDescription: crypto.encryptRSA(logRow.activityDescription, publicKey),
+                    timeStamp: crypto.encryptRSA(logRow.timeStamp, publicKey),
+                    firstName: crypto.encryptRSA(user.firstName, publicKey),
+                    lastName: crypto.encryptRSA(user.lastName, publicKey)
+                }
+                usersLog.push(log);
+            }
+        } else {
+            // Handle case where user is not found
+            console.error(`User with userID ${userID} not found.`);
+        }
+        result(null, usersLog);
+    } catch (error) {
+        console.error("Error retrieving User Logs from database:", error);
+        result({ message: "Error retrieving User Logs from database" }, null);
+    } finally {
+        if (conn) {
+            conn.release();
+        }
+    }
+};
+
+
+LogUser.getUsersLastLogin = async (senderUserID, result) => {
+    let conn;
+    try {
+        conn = await connectionPool.promise().getConnection();
+        //encrypt Data with public key of sender
+        const [publicKeySender] = await conn.query("Select publicKey from User WHERE userID=?", senderUserID)
+
+        // Query to find the newest login date for all users
+        const selectLastLoginSql = `
+        SELECT 
+            userID,
+            MAX(timeStampUser) AS newestDate
+        FROM 
+            ActivityLogUser
+        WHERE 
+            activityName IN ('LOGIN', 'CREATE_USER')
+        GROUP BY 
+            userID;
+        `;
+
+        const [dateRows] = await conn.query(selectLastLoginSql);
+        const lastLoginDates = dateRows.map(dateRow => ({
+            date: crypto.encryptRSA(dateRow.newestDate, publicKeySender[0].publicKey),
+            userID: crypto.encryptRSA(dateRow.userID, publicKeySender[0].publicKey)
+        }));
+
+        result(null, lastLoginDates);
+    } catch (error) {
+        console.error("Error occurred while fetching users' last login dates: ", error);
+        result(error, null);
+    } finally {
+        if (conn) {
+            conn.release();
+        }
+    }
+}
 
 module.exports = {
     LogUser

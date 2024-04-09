@@ -1,4 +1,4 @@
-const { Log } = require("../models/log.model");
+const { Log } = require("../models/logProject.model");
 
 // Create a new Log
 exports.create = async (req, res) => {
@@ -25,22 +25,6 @@ exports.create = async (req, res) => {
     });
 };
 
-// Find all Logs by User ID
-exports.findUserLogs = (req, res) => {
-    Log.findByID(req.query.userID, (err, userLogs) => {
-        if (err) {
-            res.status(500).send({
-                message: err.message || 'An error occurred while retrieving the User Log.'
-            });
-        } else if (!userLogs || userLogs.length === 0) {
-            res.status(404).send({
-                message: `User Log with ID ${req.query.userID} was not found.`
-            });
-        } else {
-            res.send(userLogs);
-        }
-    });
-};
 
 // Find Project Logs by Project ID
 exports.findProjectLogs = (req, res) => {

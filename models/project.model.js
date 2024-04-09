@@ -1,4 +1,4 @@
-const { convertTimeStampToDateTime } = require("../utils/convertDateTime");
+const { convertTimeStamp } = require("../utils/convertDateTime");
 const { connectionPool } = require("./db");
 const { Role } = require("./role");
 const crypto = require('../utils/crypto');

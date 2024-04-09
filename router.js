@@ -1,13 +1,13 @@
 const projectController = require("./controllers/project.controller");
 const userController = require("./controllers/user.controller");
-const logController = require("./controllers/log.controller");
+const logController = require("./controllers/logProject.controller");
 const logUserController = require("./controllers/logUser.controller");
 const projectManagerController = require("./controllers/projectManager.controller");
 
 var router = require("express").Router();
 
 //-------------------------------------------- Login --------------------------------------------------------------//
-
+router.get("/logs/project", logController.findProjectLogs);
 
 //-------------------------------------------- Create --------------------------------------------------------------//
 router.post("/projects", projectController.create);
@@ -18,8 +18,6 @@ router.get("/projects", projectController.findAll);
 
 //-------------------------------------------- Retrieve All By ID --------------------------------------------------------------//
 router.get("/projects/user", projectController.findAllUserProjects);
-router.get("/logs/user", logController.findUserLogs);
-router.get("/logs/project", logController.findProjectLogs);
 
 //-------------------------------------------- Find One By ID --------------------------------------------------------------//
 router.get("/projects/:id", projectController.findOneProject);
@@ -53,8 +51,9 @@ router.put("/verifyToken", userController.verifyToken);
 
 
 //-------------------------------------------- LOG USER --------------------------------------------------------------//
-router.get("/user-logs/lastLogins", logUserController.lastLoginDates);
+router.get("/user-logs/lastLogins/:userID", logUserController.lastLoginDates);
 router.post("/user-logs", logUserController.create);
+router.get("/user-logs/:userID", logUserController.findUserLogs);
 
 
 
