@@ -7,30 +7,28 @@ const projectManagerController = require("./controllers/projectManager.controlle
 var router = require("express").Router();
 
 //-------------------------------------------- Login --------------------------------------------------------------//
-router.get("/logs/project", logController.findProjectLogs);
 
 //-------------------------------------------- Create --------------------------------------------------------------//
-router.post("/projects", projectController.create);
-router.post("/project-logs", logController.create);
 
 //-------------------------------------------- Retrieve All--------------------------------------------------------------//
+router.post("/projects", projectController.create);
 router.get("/projects", projectController.findAll);
+router.get("/projects/:userID", projectController.findUserProjects);
 
-//-------------------------------------------- Retrieve All By ID --------------------------------------------------------------//
-router.get("/projects/user", projectController.findAllUserProjects);
+router.put("/projects", projectController.update);
+router.delete("/projects", projectController.delete);
 
-//-------------------------------------------- Find One By ID --------------------------------------------------------------//
-router.get("/projects/:id", projectController.findOneProject);
+
+router.get("/logs/project", logController.findProjectLogs);
+router.post("/project-logs", logController.create);
 
 //get Admin Password, Manager Password and ManagerID
 router.get("/projectAdminAndManager/passwords/:id", projectManagerController.findManagerAndAdminPassword);
 
 //-------------------------------------------- Update --------------------------------------------------------------//
-router.put("/projects", projectController.update);
 router.put("/projectManager", projectManagerController.update)
 
 //-------------------------------------------- Delete --------------------------------------------------------------//
-router.delete("/projects", projectController.delete);
 router.delete("/projectManager", projectManagerController.delete);
 
 //-------------------------------------------- Check If Exists --------------------------------------------------------------//

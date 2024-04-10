@@ -11,7 +11,7 @@ exports.create = async (req, res) => {
 
   const data = req.body;
   // Extract project data from request body
-  let endDate = new Date(data.projectEndDate.year, data.projectEndDate.month, data.projectEndDate.day)
+  let endDate = new Date(data.projectEndDate)
   const projectData = {
     projectName: data.projectName,
     projectDescription: data.projectDescription,
@@ -48,29 +48,10 @@ exports.findAll = (req, res) => {
   });
 };
 
-// Retrieve a specific Project by ID
-exports.findOneProject = (req, res) => {
-  Project.findByID(req.params.id, (err, project) => {
-    if (err) {
-      // If an error occurs, return 500 Internal Server Error
-      return res.status(500).send({
-        message: err.message || 'An error occurred while retrieving the Project.'
-      });
-    }
-    if (!project) {
-      // If project is not found, return 404 Not Found
-      return res.status(404).send({
-        message: `Project with ID ${req.params.id} was not found.`
-      });
-    }
-    // If successful, return the project
-    res.send(project);
-  });
-};
 
 // Retrieve all Projects associated with a specific User
-exports.findAllUserProjects = (req, res) => {
-  Project.findProjectsByUserID(req.query.userID, (err, projects) => {
+exports.findUserProjects = (req, res) => {
+  Project.findByUserID(req.params.userID, (err, projects) => {
     if (err) {
       // If an error occurs, return 500 Internal Server Error
       return res.status(500).send({
