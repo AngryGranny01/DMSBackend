@@ -1,4 +1,4 @@
-const { Log } = require("../models/logProject.model");
+const { LogProject } = require("../models/logProject.model");
 
 // Create a new Log
 exports.create = async (req, res) => {
@@ -13,7 +13,7 @@ exports.create = async (req, res) => {
     const logData = req.body;
 
     // Call the create function on the Log model to save the new Log
-    Log.create(logData, (err,) => {
+    LogProject.create(logData, (err,) => {
         if (err) {
             res.status(500).send({
                 message: err.message || "Some error occurred while creating the Project Log."
@@ -28,7 +28,7 @@ exports.create = async (req, res) => {
 
 // Find Project Logs by Project ID
 exports.findProjectLogs = (req, res) => {
-    Log.findProjectLogsByID(req.query.projectID, (err, projectLogs) => {
+    LogProject.findProjectLogsByID(req.query.projectID, req.query.userID, (err, projectLogs) => {
         if (err) {
             res.status(500).send({
                 message: err.message || 'An error occurred while retrieving the Project Log.'

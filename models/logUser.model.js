@@ -22,14 +22,13 @@ LogUser.create = async (log, result) => {
         await conn.beginTransaction();
         let decryptedActDesc = crypto.decryptRSA(log.activityDescription, STANDARD_PRIVATE_KEY)
         let decryptedActName = crypto.decryptRSA(log.activityName, STANDARD_PRIVATE_KEY)
-        let decrypteduserID = crypto.decryptRSA(log.userID, STANDARD_PRIVATE_KEY)
 
         // Insert LogUser data into the database
         const insertLogSql = 'INSERT INTO activityLogUser SET ?';
         const logData = {
             activityDescription: decryptedActDesc,
             activityName: decryptedActName,
-            userID: decrypteduserID,
+            userID: log.userID,
             timeStampUser: new Date()
         };
         const [rowsLog, fieldsUser] = await conn.query(insertLogSql, logData);
@@ -91,8 +90,8 @@ LogUser.findByID = async (userID, result) => {
             // Process log data
             for (let logRow of logRows) {
                 const log = {
-                    logID: crypto.encryptRSA(logRow.logID, publicKey),
-                    userID: crypto.encryptRSA(logRow.userID, publicKey),
+                    logID: logRow.logID,
+                    userID: logRow.userID,
                     activityName: crypto.encryptRSA(logRow.activityName, publicKey),
                     activityDescription: crypto.encryptRSA(logRow.activityDescription, publicKey),
                     timeStamp: crypto.encryptRSA(logRow.timeStamp, publicKey),

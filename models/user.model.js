@@ -1,6 +1,5 @@
 const { connectionPool } = require("./db");
 const { Role } = require("./role");
-const { findNewestDate } = require('../utils/convertDateTime');
 const { ActivityName } = require('./activityName');
 const { sendOneTimeLink, generateToken } = require("../service/emailService")
 const crypto = require("../utils/crypto")

@@ -38,7 +38,7 @@ ProjectManager.updateByID = async (userID, managerID, result) => {
 
 
 // Function to get Project Manager ID by User ID
-ProjectManager.getProjectManagerIDByUserID = async (userID, result) => {
+ProjectManager.getProjectManager = async (userID, result) => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();

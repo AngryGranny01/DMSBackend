@@ -1,8 +1,8 @@
 const { connectionPool } = require("./db");
-const { convertTimeStamp } = require("../utils/convertDateTime");
-const crypto = require("../utils/crypto")
+const crypto = require("../utils/crypto");
+const { STANDARD_PRIVATE_KEY } = require("../constants/env");
 
-const Log = function (log, timeStamp, user) {
+const LogProject = function (log, timeStamp, user) {
     this.logID = log.logID;
     this.projectID = log.projectID;
     this.userID = log.userID;
@@ -14,7 +14,7 @@ const Log = function (log, timeStamp, user) {
 };
 
 // Create a new Log entry
-Log.create = async (log, result) => {
+LogProject.create = async (log, result) => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
@@ -23,13 +23,14 @@ Log.create = async (log, result) => {
         console.log("Log entry: " + log)
         // Insert Log data into the database
         const insertLogSql = 'INSERT INTO activityLog SET ?';
-        let decryptedActivityDescription = log.activityDescription //decryptUsingAES256
-        let decryptedActivityName = log.activityName //decryptUsingAES256
+
+        const decryptedActivityDesc = crypto.decryptRSA(log.description, STANDARD_PRIVATE_KEY)
+        const decryptedActivityName = crypto.decryptRSA(log.activityName, STANDARD_PRIVATE_KEY)
         const logData = {
-            activityDescription: decryptedActivityDescription,
+            activityDescription: decryptedActivityDesc,
             activityName: decryptedActivityName,
-            userID: log.userID, //decryptUsingAES256
-            projectID: log.projectID, //decryptUsingAES256
+            userID: log.userID,
+            projectID: log.projectID,
             timeStampLog: new Date()
         };
         await conn.query(insertLogSql, logData);
@@ -47,10 +48,14 @@ Log.create = async (log, result) => {
     }
 };
 
-Log.findProjectLogsByID = async (projectID, result) => {
+LogProject.findProjectLogsByID = async (projectID, userID, result) => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
+        //encrypt Data with public key of sender
+        const [publicKeySender] = await conn.query("Select publicKey from User WHERE userID=?", userID)
+        const senderPublicKey = publicKeySender[0].publicKey
+
         const queryProjectLog = `
             SELECT * 
             FROM ActivityLog
@@ -72,26 +77,23 @@ Log.findProjectLogsByID = async (projectID, result) => {
                 // Process each log row
 
                 for (let logRow of logRows) {
-                    let timeStamp = convertTimeStamp(logRow.timeStampLog);
-
                     const log = {
                         logUserID: logRow.logID,
                         projectID: logRow.projectID,
                         userID: logRow.userID,
-                        activityName: logRow.activityName,
-                        activityDescription: logRow.activityDescription,
-                        timeStamp: timeStamp,
-                        firstName: user.firstName,
-                        lastName: user.lastName
+                        activityName: crypto.encryptRSA(logRow.activityName,senderPublicKey),
+                        activityDescription: crypto.encryptRSA(logRow.activityDescription,senderPublicKey),
+                        timeStamp: crypto.encryptRSA(logRow.timeStampLog,senderPublicKey),
+                        firstName: crypto.encryptRSA(user.firstName,senderPublicKey),
+                        lastName: crypto.encryptRSA(user.lastName,senderPublicKey)
                     };
                     projectLogs.push(log);
                 }
             } else {
                 // Handle case where user is not found
-                console.error(`User with userID ${logRow.userID} not found.`);
+                console.error(`Project Log with userID ${userID} not found.`);
             }
         }
-
         // Return projectLogs after processing all logs
         result(null, projectLogs);
     } catch (error) {
@@ -104,75 +106,6 @@ Log.findProjectLogsByID = async (projectID, result) => {
     }
 };
 
-// Find all Logs by User ID
-Log.findByID = async (userID, result) => {
-    let conn;
-    try {
-        conn = await connectionPool.promise().getConnection();
-        const queryUserLog = `
-            SELECT logUserID AS logID,
-                    activityDescription,
-                    activityName,
-                    userID,
-                    NULL AS projectID, -- Add NULL value to match the number of columns
-                    timeStampUser AS timeStamp
-            FROM ActivityLogUser
-            WHERE userID = ?
-
-            UNION
-
-            SELECT logID,
-                    activityDescription,
-                    activityName,
-                    userID,
-                    projectID,
-                    timeStampLog AS timeStamp
-            FROM ActivityLog
-            WHERE userID = ?
-
-            ORDER BY timeStamp DESC;`;
-
-        // Query the database to find the user logs by userID
-        const [logRows] = await conn.query(queryUserLog, [userID, userID]);
-        const usersLog = [];
-
-        // Get Name of the Log Create
-        let [userRows] = await conn.query("Select firstName, lastName from User where userID = ?", userID);
-
-        if (userRows.length > 0) {
-            let user = userRows[0];
-
-            // Process log data
-            for (let logRow of logRows) {
-                let timeStamp = convertTimeStamp(logRow.timeStamp);
-
-                const log = {
-                    logUserID: logRow.logID,
-                    projectID: logRow.projectID,
-                    userID: logRow.userID,
-                    activityName: logRow.activityName,
-                    activityDescription: logRow.activityDescription,
-                    timeStamp: timeStamp,
-                    firstName: user.firstName,
-                    lastName: user.lastName
-                }
-                usersLog.push(log);
-            }
-        } else {
-            // Handle case where user is not found
-            console.error(`User with userID ${logRow.userID} not found.`);
-        }
-        result(null, usersLog);
-    } catch (error) {
-        console.error("Error retrieving User Logs from database:", error);
-        result({ message: "Error retrieving User Logs from database" }, null);
-    } finally {
-        if (conn) {
-            conn.release();
-        }
-    }
-};
-
 module.exports = {
-    Log
+    LogProject
 };
