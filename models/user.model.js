@@ -1,11 +1,8 @@
 const { connectionPool } = require("./db");
 const { Role } = require("./role");
-const { ActivityName } = require('./activityName');
 const { sendOneTimeLink, generateToken } = require("../service/emailService")
 const crypto = require("../utils/crypto")
 const { STANDARD_PRIVATE_KEY, STANDARD_PUBLIC_KEY } = require("../constants/env")
-const forge = require('node-forge');
-const { response } = require("express");
 
 // User model definition
 const User = function (user, role) {

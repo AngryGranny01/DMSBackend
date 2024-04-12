@@ -2,7 +2,7 @@ const { User } = require("../models/user.model");
 const jwt = require('jsonwebtoken');
 const { JWT_SECRET } = require("../constants/env");
 const crypto = require("../utils/crypto")
-const { STANDARD_PRIVATE_KEY, STANDARD_PUBLIC_KEY } = require("../constants/env")
+const { STANDARD_PRIVATE_KEY} = require("../constants/env")
 
 // Create a new user
 exports.create = async (req, res) => {

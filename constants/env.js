@@ -4,9 +4,6 @@ const JWT_SECRET = process.env.JWT_SECRET;
 const EMAIL_ENV = process.env.EMAIL_ENV;
 const PASSWORD_ENV = process.env.PASSWORD_ENV;
 
-const KEY_SIZE_PKDF2 = process.env.KEY_SIZE_PKDF2;
-const ITERATIONS_PKDF2 = process.env.ITERATIONS_PKDF2;
-
 const STANDARD_PRIVATE_KEY = `-----BEGIN RSA PRIVATE KEY-----
 MIIEoQIBAAKCAQBRkovlcbrixspAnPGSsO2/EBiYqCiE4wFD556nDsjHHGz1WilH
 6+vBuBnhkjvuVvPeIYEEFPMAonfeBNL9UGWzBmVmpjfBWSXEg25h+aPTQHiWB5i2
@@ -54,8 +51,6 @@ module.exports = {
     JWT_SECRET,
     EMAIL_ENV,
     PASSWORD_ENV,
-    KEY_SIZE_PKDF2,
-    ITERATIONS_PKDF2,
     DB_HOST,
     DB_USER,
     DB_NAME,

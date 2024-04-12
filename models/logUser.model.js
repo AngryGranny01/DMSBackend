@@ -1,5 +1,4 @@
 const { connectionPool } = require("./db");
-const { ActivityName } = require('./activityName');
 const crypto = require("../utils/crypto");
 const { STANDARD_PRIVATE_KEY } = require("../constants/env");
 

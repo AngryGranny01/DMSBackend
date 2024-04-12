@@ -1,6 +1,5 @@
 const { connectionPool } = require("./db");
 const { Role } = require("./role");
-const crypto = require('../utils/crypto');
 
 const Project = function (project, dateTime) {
     this.projectID = project.projectID;
