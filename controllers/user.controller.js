@@ -1,8 +1,6 @@
 const { User } = require("../models/user.model");
 const jwt = require('jsonwebtoken');
 const { JWT_SECRET } = require("../constants/env");
-const crypto = require("../utils/crypto")
-const { STANDARD_PRIVATE_KEY} = require("../constants/env")
 
 // Create a new user
 exports.create = async (req, res) => {
@@ -180,9 +178,8 @@ exports.checkLogin = async (req, res) => {
 //verifys the token and then updates the user password
 exports.verifyToken = async (req, res) => {
     const token = req.body.token
-    const passwordHash = crypto.decryptRSA(req.body.passwordHash,STANDARD_PRIVATE_KEY);
+    const passwordHash = req.body.passwordHash
     const salt = req.body.salt;
-    const publicKey = req.body.publicKey
 
     // Check if token is provided
     if (!token) {

@@ -1,6 +1,4 @@
 const { connectionPool } = require("./db");
-const crypto = require("../utils/crypto");
-const { STANDARD_PRIVATE_KEY } = require("../constants/env");
 
 const LogProject = function (log, timeStamp, user) {
     this.logID = log.logID;
@@ -24,11 +22,9 @@ LogProject.create = async (log, result) => {
         // Insert Log data into the database
         const insertLogSql = 'INSERT INTO activityLog SET ?';
 
-        const decryptedActivityDesc = crypto.decryptRSA(log.description, STANDARD_PRIVATE_KEY)
-        const decryptedActivityName = crypto.decryptRSA(log.activityName, STANDARD_PRIVATE_KEY)
         const logData = {
-            activityDescription: decryptedActivityDesc,
-            activityName: decryptedActivityName,
+            activityDescription: log.description,
+            activityName: log.activityName,
             userID: log.userID,
             projectID: log.projectID,
             timeStampLog: new Date()
@@ -52,9 +48,6 @@ LogProject.findProjectLogsByID = async (projectID, userID, result) => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
-        //encrypt Data with public key of sender
-        const [publicKeySender] = await conn.query("Select publicKey from User WHERE userID=?", userID)
-        const senderPublicKey = publicKeySender[0].publicKey
 
         const queryProjectLog = `
             SELECT * 
@@ -81,11 +74,11 @@ LogProject.findProjectLogsByID = async (projectID, userID, result) => {
                         logUserID: logRow.logID,
                         projectID: logRow.projectID,
                         userID: logRow.userID,
-                        activityName: crypto.encryptRSA(logRow.activityName,senderPublicKey),
-                        activityDescription: crypto.encryptRSA(logRow.activityDescription,senderPublicKey),
-                        timeStamp: crypto.encryptRSA(logRow.timeStampLog,senderPublicKey),
-                        firstName: crypto.encryptRSA(user.firstName,senderPublicKey),
-                        lastName: crypto.encryptRSA(user.lastName,senderPublicKey)
+                        activityName: logRow.activityName,
+                        activityDescription: logRow.activityDescription,
+                        timeStamp: logRow.timeStampLog,
+                        firstName: user.firstName,
+                        lastName: user.lastName
                     };
                     projectLogs.push(log);
                 }

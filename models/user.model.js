@@ -1,8 +1,6 @@
 const { connectionPool } = require("./db");
 const { Role } = require("./role");
 const { sendOneTimeLink, generateToken } = require("../service/emailService")
-const crypto = require("../utils/crypto")
-const { STANDARD_PRIVATE_KEY, STANDARD_PUBLIC_KEY } = require("../constants/env")
 
 // User model definition
 const User = function (user, role) {
@@ -12,7 +10,6 @@ const User = function (user, role) {
     this.lastName = user.lastName;
     this.email = user.email;
     this.passwordHash = user.passwordHash;
-    this.publicKey = user.publicKey;
     this.salt = user.salt;
     this.orgEinheit = user.orgEinheit
     this.role = role;
@@ -25,27 +22,24 @@ User.create = async (userData, response) => {
         conn = await connectionPool.promise().getConnection();
         await conn.beginTransaction();
 
-        //decrypt Data with standard Private Key becaus no password exists yet
-        const decryptedUserData = decryptUser(userData, STANDARD_PRIVATE_KEY)
         let isAdmin = false
         let isProjectManager = false
 
-        if (decryptedUserData.role === Role.ADMIN) {
+        if (userData.role === Role.ADMIN) {
             isAdmin = true
             isProjectManager = true
-        } if (decryptedUserData.role === Role.PROJECT_MANAGER) {
+        } if (userData.role === Role.PROJECT_MANAGER) {
             isProjectManager = true
         }
         const user = {
-            userName: decryptedUserData.userName,
-            firstName: decryptedUserData.firstName,
-            lastName: decryptedUserData.lastName,
-            email: decryptedUserData.email,
-            orgEinheit: decryptedUserData.orgEinheit,
+            userName: userData.userName,
+            firstName: userData.firstName,
+            lastName: userData.lastName,
+            email: userData.email,
+            orgEinheit: userData.orgEinheit,
             isAdmin: isAdmin,
             passwordHash: "",
-            salt: "",
-            publicKey: STANDARD_PUBLIC_KEY
+            salt: ""
         }
 
         const insertUserSql = 'INSERT INTO user SET ?';
@@ -56,7 +50,7 @@ User.create = async (userData, response) => {
         const token = generateToken(rowsUser.insertId);
 
         // Send email with one-time link
-        await sendOneTimeLink(decryptedUserData.email, token);
+        await sendOneTimeLink(userData.email, token);
 
         // Check if the user is a project manager or Admin
         if (isProjectManager === true || isAdmin === true) {
@@ -89,10 +83,9 @@ User.getAll = async (senderUserID, response) => {
 
         // Query all users from the database
         const [userRows] = await conn.query("SELECT * FROM user where userID");
-        //encrypt Data with public key of sender
-        const [publicKeySender] = await conn.query("Select publicKey from User WHERE userID=?", senderUserID)
+
         // Array to store users 
-        const encryptedUsers = [];
+        const users = [];
 
         // Iterate through each user
         for (const userRow of userRows) {
@@ -106,12 +99,20 @@ User.getAll = async (senderUserID, response) => {
             } else {
                 role = Role.USER;
             }
-            const user = encryptUser(userRow, role, publicKeySender[0].publicKey)
+            const user = {
+                userID: userRow.userID,
+                userName: userRow.userName,
+                firstName: userRow.firstName,
+                lastName: userRow.lastName,
+                email: userRow.email,
+                orgEinheit: userRow.orgEinheit,
+                role: role
+            }
 
-            encryptedUsers.push(user);
+            users.push(user);
         }
 
-        response(null, encryptedUsers);
+        response(null, users);
     } catch (error) {
         console.error("Error retrieving data from database:", error);
         response({ message: "Error retrieving data from database" }, null);
@@ -127,10 +128,8 @@ User.updateByID = async (user, response) => {
     try {
         conn = await connectionPool.promise().getConnection();
         await conn.beginTransaction();
-        console.log(user.publicKey)
-        const decryptedUserData = decryptUser(user, STANDARD_PRIVATE_KEY)
-        let decryptedPasswordHash = crypto.decryptRSA(user.passwordHash, STANDARD_PRIVATE_KEY)
-        let isAdmin = decryptedUserData.role === Role.ADMIN ? true : false;
+
+        let isAdmin = user.role === Role.ADMIN ? true : false;
         // Update the user in the database
         await conn.query(
             `UPDATE user 
@@ -141,47 +140,25 @@ User.updateByID = async (user, response) => {
                     email = ?, 
                     passwordHash = ?,
                     salt = ?, 
-                    publicKey = ?,
                     isAdmin = ?,
                     orgEinheit = ? 
                 WHERE 
                     userID = ?;`,
-            [decryptedUserData.userName, decryptedUserData.firstName, decryptedUserData.lastName, decryptedUserData.email, decryptedPasswordHash, user.salt, user.publicKey, isAdmin, decryptedUserData.orgEinheit, decryptedUserData.userID]
+            [user.userName, user.firstName, user.lastName, user.email, user.passwordHash, user.salt, isAdmin, user.orgEinheit, user.userID]
         );
 
         // Check if the user is a project manager
-        if (decryptedUserData.role === Role.PROJECT_MANAGER || decryptedUserData.role === Role.ADMIN) {
+        if (user.role === Role.PROJECT_MANAGER || user.role === Role.ADMIN) {
             // Check if the user is already in the projectmanager table
-            const [managerRows] = await conn.query("SELECT * FROM projectmanager WHERE userID = ?", decryptedUserData.userID);
+            const [managerRows] = await conn.query("SELECT * FROM projectmanager WHERE userID = ?", user.userID);
 
             // If not, insert the user into the projectmanager table
             if (managerRows.length === 0) {
-                await conn.query("INSERT INTO projectmanager (userID) VALUES (?)", [decryptedUserData.userID]);
+                await conn.query("INSERT INTO projectmanager (userID) VALUES (?)", [user.userID]);
                 console.log("User successfully added as a project manager.");
             } else {
                 console.log("User is already a project manager.");
             }
-        }
-
-        //Update ProjectUserKey
-        let projectKeyQuery = `
-        SELECT Project.projectKey 
-        FROM Project 
-        INNER JOIN 
-            Project_User 
-        ON 
-            Project.projectID = Project_User.projectID 
-        WHERE 
-            Project_User.userID = ?;`
-
-        const [projectKeys] = await conn.query(projectKeyQuery, decryptedUserData.userID);
-
-        for (const projectKeyRow of projectKeys) {
-            //get public key for every user
-            //decrypt Data with private key of sender
-            const [publicKeyUser] = await conn.query("Select publicKey from User WHERE userID=?", decryptedUser.userID)
-            const userProjectKey = crypto.encryptRSA(projectKeyRow.projectKey, publicKeyUser);
-            await conn.query("UPDATE Project_User SET userProjectKey = ? WHERE userID = ?;", [userProjectKey, decryptedUser.userID]);
         }
 
         await conn.commit();
@@ -233,10 +210,10 @@ User.remove = async (userID, response) => {
 User.checkIfEmailAlreadyUsed = async (email, response) => {
     let conn;
     try {
-        let decrpytedEmail = crypto.decryptRSA(decodeURIComponent(email), STANDARD_PRIVATE_KEY)
+        //decodeURIComponent(email)
         conn = await connectionPool.promise().getConnection();
         const query = "SELECT * FROM user WHERE email = ?";
-        const [rows,] = await conn.query(query, decrpytedEmail);
+        const [rows,] = await conn.query(query, email);
         if (rows.length === 0) {
             response(null, { exist: false });
         } else {
@@ -256,10 +233,10 @@ User.checkIfEmailAlreadyUsed = async (email, response) => {
 User.isUsernameAlreadyUsed = async (username, response) => {
     let conn;
     try {
-        let decrpytedUsername = crypto.decryptRSA(decodeURIComponent(username), STANDARD_PRIVATE_KEY)
+        //decodeURIComponent(username)
         conn = await connectionPool.promise().getConnection();
         const query = "SELECT * FROM user WHERE userName = ?";
-        const [rows,] = await conn.query(query, decrpytedUsername);
+        const [rows,] = await conn.query(query, username);
         if (rows.length === 0) {
             response(null, { exist: false });
         } else {
@@ -278,16 +255,15 @@ User.checkPassword = async (email, response) => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
-        const query = "SELECT passwordHash,publicKey,userID FROM user WHERE email = ?";
+        const query = "SELECT passwordHash, userID FROM user WHERE email = ?";
         const [rows] = await conn.query(query, email);
 
         // If no user found, return null
         if (rows.length === 0) {
             return response(null, null);
         }
-        let encryptedPassword = crypto.encryptRSA(rows[0].passwordHash, rows[0].publicKey)
 
-        response(null, { passwordHash: encryptedPassword, userID: rows[0].userID, publicKey: rows[0].publicKey });
+        response(null, { passwordHash: rows[0].passwordHash, userID: rows[0].userID });
 
     } catch (err) {
         response(err, null);
@@ -322,7 +298,16 @@ User.findByID = async (userID, response) => {
             }
 
             // Create the user object
-            const user = encryptUser(userData, role, userData.publicKey)
+            const user = {
+                userID: userData.userID,
+                userName: userData.userName,
+                firstName: userData.firstName,
+                lastName: userData.lastName,
+                email: userData.email,
+                orgEinheit: userData.orgEinheit,
+                role: role
+            }
+
 
             response(null, user);
         } else {
@@ -339,45 +324,18 @@ User.findByID = async (userID, response) => {
     }
 };
 
-function encryptUser(userData, role, publicKey) {
-    const encryptedUser = {
-        userID: userData.userID,
-        userName: crypto.encryptRSA(userData.userName, publicKey),
-        firstName: crypto.encryptRSA(userData.firstName, publicKey),
-        lastName: crypto.encryptRSA(userData.lastName, publicKey),
-        email: crypto.encryptRSA(userData.email, publicKey),
-        orgEinheit: crypto.encryptRSA(userData.orgEinheit, publicKey),
-        role: crypto.encryptRSA(role, publicKey),
-        publicKey: userData.publicKey
-    };
-    return encryptedUser;
-}
-
-function decryptUser(encryptedUserData, privateKey) {
-    const decryptedUser = {
-        userID: encryptedUserData.userID,
-        userName: crypto.decryptRSA(encryptedUserData.userName, privateKey),
-        firstName: crypto.decryptRSA(encryptedUserData.firstName, privateKey),
-        lastName: crypto.decryptRSA(encryptedUserData.lastName, privateKey),
-        email: crypto.decryptRSA(encryptedUserData.email, privateKey),
-        orgEinheit: crypto.decryptRSA(encryptedUserData.orgEinheit, privateKey),
-        role: crypto.decryptRSA(encryptedUserData.role, privateKey)
-    };
-    return decryptedUser;
-}
-
-User.updatePassword = async (userID, passwordHash, salt, publicKey, response) => {
+User.updatePassword = async (userID, passwordHash, salt, response) => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
-        let [res] = await conn.query('SELECT publicKey FROM user WHERE userID = ?', [userID]);
-        console.log(res[0].publicKey)
-        if (res[0].publicKey === STANDARD_PUBLIC_KEY) {
+        let [res] = await conn.query('SELECT passwordHash FROM user WHERE userID = ?', [userID]);
+        
+        if (res[0].passwordHash === "") {
             await conn.beginTransaction();
             // Update the password in the database
             await conn.query(
-                `UPDATE user SET passwordHash = ?, salt = ?, publicKey = ? WHERE userID = ?`,
-                [passwordHash, salt, publicKey, userID]
+                `UPDATE user SET passwordHash = ?, salt = ? WHERE userID = ?`,
+                [passwordHash, salt, userID]
             );
             await conn.commit();
             response(null, `User with ID ${userID} updated successfully`);

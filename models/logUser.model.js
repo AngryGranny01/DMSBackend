@@ -1,6 +1,4 @@
 const { connectionPool } = require("./db");
-const crypto = require("../utils/crypto");
-const { STANDARD_PRIVATE_KEY } = require("../constants/env");
 
 const LogUser = function (log, timeStamp, user) {
     this.logUserID = log.logUserID;
@@ -19,14 +17,12 @@ LogUser.create = async (log, result) => {
     try {
         conn = await connectionPool.promise().getConnection();
         await conn.beginTransaction();
-        let decryptedActDesc = crypto.decryptRSA(log.activityDescription, STANDARD_PRIVATE_KEY)
-        let decryptedActName = crypto.decryptRSA(log.activityName, STANDARD_PRIVATE_KEY)
 
         // Insert LogUser data into the database
         const insertLogSql = 'INSERT INTO activityLogUser SET ?';
         const logData = {
-            activityDescription: decryptedActDesc,
-            activityName: decryptedActName,
+            activityDescription: log.activityDescription,
+            activityName: log.activityName,
             userID: log.userID,
             timeStampUser: new Date()
         };
@@ -50,8 +46,6 @@ LogUser.findByID = async (userID, result) => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
-        //encrypt Data with public key of sender
-        const [publicKeySender] = await conn.query("Select publicKey from User WHERE userID=?", userID)
 
         const queryUserLog = `
             SELECT logUserID AS logID,
@@ -85,17 +79,16 @@ LogUser.findByID = async (userID, result) => {
 
         if (userRows.length > 0) {
             let user = userRows[0];
-            const publicKey = publicKeySender[0].publicKey
             // Process log data
             for (let logRow of logRows) {
                 const log = {
                     logID: logRow.logID,
                     userID: logRow.userID,
-                    activityName: crypto.encryptRSA(logRow.activityName, publicKey),
-                    activityDescription: crypto.encryptRSA(logRow.activityDescription, publicKey),
-                    timeStamp: crypto.encryptRSA(logRow.timeStamp, publicKey),
-                    firstName: crypto.encryptRSA(user.firstName, publicKey),
-                    lastName: crypto.encryptRSA(user.lastName, publicKey)
+                    activityName: logRow.activityName,
+                    activityDescription: logRow.activityDescription,
+                    timeStamp:logRow.timeStamp,
+                    firstName: user.firstName,
+                    lastName: user.lastName
                 }
                 usersLog.push(log);
             }
@@ -119,8 +112,6 @@ LogUser.getUsersLastLogin = async (senderUserID, result) => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
-        //encrypt Data with public key of sender
-        const [publicKeySender] = await conn.query("Select publicKey from User WHERE userID=?", senderUserID)
 
         // Query to find the newest login date for all users
         const selectLastLoginSql = `
@@ -137,8 +128,8 @@ LogUser.getUsersLastLogin = async (senderUserID, result) => {
 
         const [dateRows] = await conn.query(selectLastLoginSql);
         const lastLoginDates = dateRows.map(dateRow => ({
-            date: crypto.encryptRSA(dateRow.newestDate, publicKeySender[0].publicKey),
-            userID: crypto.encryptRSA(dateRow.userID, publicKeySender[0].publicKey)
+            date: dateRow.newestDate,
+            userID: dateRow.userID
         }));
 
         result(null, lastLoginDates);

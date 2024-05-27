@@ -13,7 +13,6 @@ CREATE TABLE User (
     email VARCHAR(255) UNIQUE,
     passwordHash VARCHAR(255),
     salt VARCHAR(255),
-    publicKey VARCHAR(2048), -- Adjusted length for publicKey
     orgEinheit VARCHAR(255),
     isAdmin BOOLEAN
 );
@@ -31,7 +30,7 @@ CREATE TABLE Project (
     projectDescription VARCHAR(255),
     projectKey VARCHAR(255),
     projectName VARCHAR(255),
-    projectEndDate DATE, -- Consider using DATETIME or TIMESTAMP if needed
+    projectEndDate DATE, 
     managerID INT,
     FOREIGN KEY (managerID) REFERENCES ProjectManager(managerID)
 );
@@ -60,7 +59,6 @@ CREATE TABLE ActivityLogUser (
 
 -- Project_User table
 CREATE TABLE Project_User (
-    userProjectKey VARCHAR(255),
     userID INT,
     projectID INT,
     PRIMARY KEY (userID, projectID),
@@ -70,24 +68,18 @@ CREATE TABLE Project_User (
 
 -- Sample data
 -- Sample data for User table
-INSERT INTO User (userName, firstName, lastName, email, passwordHash, salt, publicKey, orgEinheit, isAdmin)
+INSERT INTO User (userName, firstName, lastName, email, passwordHash, salt, orgEinheit, isAdmin)
 VALUES 
-    ('admin', 'John', 'Doe', 'john@example.com', 'c932398e9decfbb23710fd4d57ccc5047d7a1fc50d1c73c1bb94fb86bb985729', 'b810b51a9d9f6e81e5ea35fb4d532b1c', '-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAocREsfAOim6a1u37fbCI
-JTzw7JqohhemPHYeAzfJ/YN4TDMz1L3m8eWCVu0wKfq1+S3UoPd7Wz8rcUnleG0B
-Y47Wx/+JCMybZjgtG75sOvcJbuiUkaOK2N4vdjVVZFHDxNh/uPN/oakaCNxn8t/H
-6+P+oHCt6bMotnd2HtyeONaOGMCHrefHQ9VyA6/sEe3v0za3hl82ERoWl41foQ64
-yby1rWh6tMXCO5CHdnXST72ajXLGFzZgdfdbiWZ6hNJVv9k2tT7gaL1GGiNvUSVZ
-FyL+w5o1C3UfSMSnm4f0rDBq0MbKc7Z0Eho+QyFjFsYQKXpk8IsBiia3q00OahPS
-YwIDAQAB
------END PUBLIC KEY-----','Einheit 1',1);
-
+    ('admin1', 'John', 'Doe', 'john@example.com','c89de85374a62d523d42429b026f297264bcc4038921440616f6b7f71f25c725','9d4312cf94cf33ba6a3ce43b8d25f1ad','Einheit 1',1),
+    ('admin2', 'Max', 'Mustermann', 'max@example.com','7cd55e3b15451e11ac8762efb8552e9525d53c0f79f709465c221c925adb9749','10f15805b0cb6f8957d1da42d0306b6c','Einheit 2',1);
 -- Sample data for ProjectManager table
 INSERT INTO ProjectManager (userID)
 VALUES 
-    (1);
+    (1),
+    (2);
     
 -- Insert activity logs for all users with current timestamp
 INSERT INTO ActivityLogUser (activityDescription, activityName, userID, timeStampUser)
 VALUES 
-    ('{"userID":1,"username":"admin","timeStamp": "2024-03-15T18:19:06.926Z","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 1, NOW());
+    ('{"userID":1,"username":"admin1","timeStamp": "2024-03-15T18:19:06.926Z","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 1, NOW()),
+    ('{"userID":2,"username":"admin2","timeStamp": "2024-03-15T18:19:06.926Z","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 2, NOW());

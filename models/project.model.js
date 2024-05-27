@@ -20,17 +20,12 @@ Project.create = async (newProject, result) => {
 
         const insertProjectSql = 'INSERT INTO Project SET ?'
 
-        let projectKey = newProject.projectKey
-        let managerID = newProject.managerID //crypto.decryptUsingAES256
-        let decryptedDescription = newProject.projectDescription //crypto.decryptUsingAES256
-        let decryptedProjectName = newProject.projectName //crypto.decryptUsingAES256
-
         const projectData = {
             projectDescription: newProject.projectDescription,
             projectKey: newProject.projectKey,
             projectName: newProject.projectName,
             managerID: newProject.managerID,
-            projectEndDate: newProject.projectEndDate //crypto.decryptUsingAES256
+            projectEndDate: newProject.projectEndDate 
         }
 
         // Insert the project data into the Project table
@@ -42,16 +37,13 @@ Project.create = async (newProject, result) => {
         // Insert users into the Project_User table
         if (newProject.userIDs && newProject.userIDs.length > 0) {
             for (const user of newProject.userIDs) {
-                let userID = user.userID //crypto.decryptUsingAES256
-                //TODO: generate User Project Key
-                let unencryptedUserProjectKey = ""
-                await conn.query("INSERT INTO Project_User (userID, projectID, userProjectKey) VALUES (?, ?, ?)", [userID, projectID, unencryptedUserProjectKey]);
+                let userID = user.userID 
+                await conn.query("INSERT INTO Project_User (userID, projectID) VALUES (?, ?)", [userID, projectID]);
             }
         }
 
         await conn.commit();
-        //let encryptedProjectID = crypto.encryptUsingAES256(projectID, newProject.projectKey)
-        // Return the inserted project's ID
+        
         result(null, { projectID: projectID });
     } catch (error) {
         await conn.rollback();
@@ -189,10 +181,9 @@ Project.updateByID = async (projectData, result) => {
         // Insert users into the Project_User table
         if (projectData.userIDs && projectData.userIDs.length > 0) {
             for (const user of projectData.userIDs) {
-                let userID = user.userID //crypto.decryptUsingAES256
-                //TODO: generate User Project Key
-                let unencryptedUserProjectKey = ""
-                await conn.query("INSERT INTO Project_User (userID, projectID, userProjectKey) VALUES (?, ?, ?)", [userID, projectData.projectID, unencryptedUserProjectKey]);
+                let userID = user.userID 
+                
+                await conn.query("INSERT INTO Project_User (userID, projectID) VALUES (?, ?)", [userID, projectData.projectID]);
             }
         }
 
