@@ -28,7 +28,7 @@ exports.create = async (req, res) => {
 
 // Find Project Logs by Project ID
 exports.findProjectLogs = (req, res) => {
-    LogProject.findProjectLogsByID(req.query.projectID, req.query.userID, (err, projectLogs) => {
+    LogProject.findProjectLogsByID(req.params.projectID, (err, projectLogs) => {
         if (err) {
             res.status(500).send({
                 message: err.message || 'An error occurred while retrieving the Project Log.'

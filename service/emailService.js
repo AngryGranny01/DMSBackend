@@ -15,7 +15,7 @@ async function sendOneTimeLink(toEmail, token) {
     from: EMAIL_ENV,
     to: toEmail,
     subject: 'Email Verification',
-    html: `<p>Please use the following <a href="http://localhost:4200/setPassword?token=${encodeURIComponent(token)}">link</a> to set your password`,
+    html: `<p>Please use the following <a href="https://localhost:4200/setPassword?token=${encodeURIComponent(token)}">link</a> to set your password`,
   };
   await transporter.sendMail(mailOptions);
   console.log('Email sent successfully!');

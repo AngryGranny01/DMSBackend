@@ -14,7 +14,7 @@ router.get("/users/checkUsernameExist", userController.checkIfUsernameExist);
 router.get("/users/login", userController.checkLogin);
 router.get("/user/:userID", userController.findOne)
 router.get("/users/findSalt", userController.findSalt);
-router.get("/users/:senderUserID", userController.getAllUsers);
+router.get("/users", userController.getAllUsers);
 
 router.delete("/users/:userID", userController.delete);
 
@@ -49,7 +49,7 @@ router.get("/user-logs/lastLogins/:userID", logUserController.lastLoginDates);
 //-------------------------------------------- LOG PROJECT --------------------------------------------------------------//
 router.post("/project-logs", logController.create);
 
-router.get("/project-logs", logController.findProjectLogs);
+router.get("/project-logs/:projectID", logController.findProjectLogs);
 
 
 

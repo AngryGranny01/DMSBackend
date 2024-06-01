@@ -27,7 +27,7 @@ exports.create = async (req, res) => {
 // Retrieve all Users with last login date
 exports.getAllUsers = (req, res) => {
     // Retrieve all Users from the database .
-    User.getAll(req.params.senderUserID, (err, data) => {
+    User.getAll((err, data) => {
         if (err) {
             return res.status(500).send({
                 message: err.message || "Some error occurred while retrieving Users."
@@ -193,7 +193,7 @@ exports.verifyToken = async (req, res) => {
 
         // Update the password asynchronously
         await new Promise((resolve, reject) => {
-            User.updatePassword(userID, passwordHash, salt, publicKey,(err, data) => {
+            User.updatePassword(userID, passwordHash, salt, (err, data) => {
                 if (err) {
                     console.error(err);
                     reject(err);

@@ -76,7 +76,7 @@ User.create = async (userData, response) => {
  * Retrieves user data from the database, decrypts it, processes it, 
  * and then encrypts the data before sending it back to the caller.
  */
-User.getAll = async (senderUserID, response) => {
+User.getAll = async (response) => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
@@ -106,6 +106,7 @@ User.getAll = async (senderUserID, response) => {
                 lastName: userRow.lastName,
                 email: userRow.email,
                 orgEinheit: userRow.orgEinheit,
+                passwordHash: userRow.passwordHash,
                 role: role
             }
 
@@ -129,6 +130,19 @@ User.updateByID = async (user, response) => {
         conn = await connectionPool.promise().getConnection();
         await conn.beginTransaction();
 
+        // If password wasn't changed, retain the old password
+        let passwordHash = user.passwordHash;
+        let salt = user.salt;
+        if (!passwordHash) {
+            const [rows] = await conn.query('SELECT passwordHash, salt FROM user WHERE userID = ?', [user.userID]);
+            if (rows.length > 0) {
+                passwordHash = rows[0].passwordHash;
+                salt = rows[0].salt;
+            } else {
+                throw new Error('User not found');
+            }
+        }
+
         let isAdmin = user.role === Role.ADMIN ? true : false;
         // Update the user in the database
         await conn.query(
@@ -144,7 +158,7 @@ User.updateByID = async (user, response) => {
                     orgEinheit = ? 
                 WHERE 
                     userID = ?;`,
-            [user.userName, user.firstName, user.lastName, user.email, user.passwordHash, user.salt, isAdmin, user.orgEinheit, user.userID]
+            [user.userName, user.firstName, user.lastName, user.email, passwordHash, salt, isAdmin, user.orgEinheit, user.userID]
         );
 
         // Check if the user is a project manager
@@ -329,7 +343,7 @@ User.updatePassword = async (userID, passwordHash, salt, response) => {
     try {
         conn = await connectionPool.promise().getConnection();
         let [res] = await conn.query('SELECT passwordHash FROM user WHERE userID = ?', [userID]);
-        
+
         if (res[0].passwordHash === "") {
             await conn.beginTransaction();
             // Update the password in the database

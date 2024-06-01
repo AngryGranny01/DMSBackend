@@ -23,7 +23,7 @@ LogProject.create = async (log, result) => {
         const insertLogSql = 'INSERT INTO activityLog SET ?';
 
         const logData = {
-            activityDescription: log.description,
+            activityDescription: log.activityDescription,
             activityName: log.activityName,
             userID: log.userID,
             projectID: log.projectID,
@@ -44,7 +44,7 @@ LogProject.create = async (log, result) => {
     }
 };
 
-LogProject.findProjectLogsByID = async (projectID, userID, result) => {
+LogProject.findProjectLogsByID = async (projectID, result) => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
