@@ -70,8 +70,8 @@ CREATE TABLE Project_User (
 -- Sample data for User table
 INSERT INTO User (userName, firstName, lastName, email, passwordHash, salt, orgEinheit, isAdmin)
 VALUES 
-    ('admin1', 'John', 'Doe', 'john@example.com','c89de85374a62d523d42429b026f297264bcc4038921440616f6b7f71f25c725','9d4312cf94cf33ba6a3ce43b8d25f1ad','Einheit 1',1),
-    ('admin2', 'Max', 'Mustermann', 'max@example.com','7cd55e3b15451e11ac8762efb8552e9525d53c0f79f709465c221c925adb9749','10f15805b0cb6f8957d1da42d0306b6c','Einheit 2',1);
+    ('admin1', 'John', 'Doe', 'john@example.com','8c34c40052acd35b625a125095873f15552e6bc8d2b3ba2dd88fddba1cb3b447','c9a6cd99d8d5dcdbdb74fc73f9c96915','Einheit 1',1),
+    ('admin2', 'Max', 'Mustermann', 'max@example.com','179603da775b19969f87c94e339698c9470ffff6b65046576b8f1931e01cafe4','d28e910ebed196405f8ebb0390555fde','Einheit 2',1);
 -- Sample data for ProjectManager table
 INSERT INTO ProjectManager (userID)
 VALUES 
