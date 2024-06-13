@@ -4,8 +4,8 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const path = require('path');
-const swaggerUi = require('swagger-ui-express');
-const swaggerDocument = require('./swagger.json');
+const swaggerUI = require('swagger-ui-express');
+const swaggerSpec = require('./swagger');
 const rateLimit = require('express-rate-limit');
 
 // Middleware imports
@@ -32,8 +32,8 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// Swagger setup
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+// Serve Swagger documentation
+app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerSpec));
 
 // Use the router
 app.use('/DMSSystemAPI', router);
