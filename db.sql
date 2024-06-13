@@ -26,9 +26,8 @@ CREATE TABLE ProjectManager (
 
 -- Project table
 CREATE TABLE Project (
-    projectID INT PRIMARY KEY AUTO_INCREMENT,
+    projectID VARCHAR(8) PRIMARY KEY,
     projectDescription VARCHAR(255),
-    projectKey VARCHAR(255),
     projectName VARCHAR(255),
     projectEndDate DATE, 
     managerID INT,
@@ -41,7 +40,7 @@ CREATE TABLE ActivityLog (
     activityDescription VARCHAR(255),
     activityName VARCHAR(255),
     userID INT,
-    projectID INT,
+    projectID VARCHAR(8),
     timeStampLog TIMESTAMP,
     FOREIGN KEY (userID) REFERENCES User(userID),
     FOREIGN KEY (projectID) REFERENCES Project(projectID)
@@ -60,7 +59,7 @@ CREATE TABLE ActivityLogUser (
 -- Project_User table
 CREATE TABLE Project_User (
     userID INT,
-    projectID INT,
+    projectID VARCHAR(8),
     PRIMARY KEY (userID, projectID),
     FOREIGN KEY (userID) REFERENCES User(userID),
     FOREIGN KEY (projectID) REFERENCES Project(projectID)
