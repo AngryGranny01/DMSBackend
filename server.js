@@ -8,9 +8,9 @@ const swaggerUI = require('swagger-ui-express');
 const swaggerSpec = require('./swagger');
 const rateLimit = require('express-rate-limit');
 
-// Middleware imports
+
 const errorHandler = require('./middleware/errorHandler');
-const router = require('./router'); // Import the router
+const router = require('./router'); 
 
 const app = express();
 app.use(express.static('public'));
