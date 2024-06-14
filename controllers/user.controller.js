@@ -10,12 +10,12 @@ exports.create = async (req, res) => {
         return res.status(400).send({ message: "Content can not be empty!" });
     }
 
-    User.create(req.body, (err, data) => {
-        if (err) {
-            return res.status(500).send({ message: err.message || "Some error occurred while creating the User." });
-        }
-        res.send({ userID: data });
-    });
+    try {
+        const userID = await User.create(req.body);
+        res.status(201).send({ userID });
+    } catch (err) {
+        res.status(500).send({ message: err.message || "Some error occurred while creating the User." });
+    }
 };
 
 // Retrieve all Users

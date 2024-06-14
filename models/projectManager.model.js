@@ -44,15 +44,12 @@ ProjectManager.getProjectManager = async (userID, result) => {
         conn = await connectionPool.promise().getConnection();
         
         // Query to retrieve Project Manager ID using User ID
-        const [rowsManager] = await conn.query('SELECT pm.managerID, u.passwordHash AS managerPasswordHash FROM ProjectManager pm INNER JOIN User u ON pm.userID = u.userID WHERE pm.userID = ?', [userID]);
-        const [rowsAdmin] = await conn.query('SELECT passwordHash FROM user WHERE isAdmin = 1');
+        const [rowsManager] = await conn.query('SELECT managerID FROM ProjectManager WHERE userID = ?', [userID]);
 
-        if (rowsManager.length > 0 && rowsAdmin.length > 0) {
+        if (rowsManager.length > 0) {
             const data = {
                 managerID: rowsManager[0].managerID,
-                managerPasswordHash: rowsManager[0].managerPasswordHash,
-                adminPasswordHash: rowsAdmin[0].passwordHash
-            }
+            };
             result(null, data);
         } else {
             result({ message: "Project Manager not found for the provided User ID" }, null);

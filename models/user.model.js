@@ -14,8 +14,7 @@ const User = function (user, role) {
     this.role = role;
 };
 
-// Function to create a new user
-User.create = async (userData, response) => {
+User.create = async (userData) => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
@@ -50,11 +49,11 @@ User.create = async (userData, response) => {
         }
 
         await conn.commit();
-        response(null, rowsUser.insertId);
+        return rowsUser.insertId;
     } catch (error) {
         await conn.rollback();
         console.error("Error occurred while inserting a new User: ", error);
-        response(error, null);
+        throw error;
     } finally {
         if (conn) {
             conn.release();
@@ -86,6 +85,7 @@ User.getAll = async (response) => {
                 firstName: userRow.firstName,
                 lastName: userRow.lastName,
                 email: userRow.email,
+                salt: userRow.salt,
                 orgEinheit: userRow.orgEinheit,
                 passwordHash: userRow.passwordHash,
                 role: role

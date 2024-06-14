@@ -262,25 +262,360 @@ router.put("/users", userController.update);
  */
 router.put("/verifyToken", userController.verifyToken);
 
-// Project routes
+/**
+ * @swagger
+ * /projects:
+ *   post:
+ *     summary: Create a new project
+ *     tags: [Project]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - projectName
+ *               - projectDescription
+ *               - projectEndDate
+ *               - managerID
+ *             properties:
+ *               projectName:
+ *                 type: string
+ *               projectDescription:
+ *                 type: string
+ *               projectEndDate:
+ *                 type: string
+ *                 format: date
+ *               managerID:
+ *                 type: integer
+ *     responses:
+ *       201:
+ *         description: Project created successfully
+ *       400:
+ *         description: Invalid input
+ *       500:
+ *         description: Internal server error
+ */
 router.post("/projects", projectController.create);
+
+/**
+ * @swagger
+ * /projects:
+ *   get:
+ *     summary: Get all projects
+ *     tags: [Project]
+ *     responses:
+ *       200:
+ *         description: Projects retrieved successfully
+ *       500:
+ *         description: Internal server error
+ */
 router.get("/projects", projectController.findAll);
+
+/**
+ * @swagger
+ * /projects/{userID}:
+ *   get:
+ *     summary: Get projects for a user
+ *     tags: [Project]
+ *     parameters:
+ *       - in: path
+ *         name: userID
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: User ID
+ *     responses:
+ *       200:
+ *         description: Projects retrieved successfully
+ *       404:
+ *         description: Projects not found
+ *       500:
+ *         description: Internal server error
+ */
 router.get("/projects/:userID", projectController.findUserProjects);
+
+/**
+ * @swagger
+ * /projects:
+ *   put:
+ *     summary: Update a project
+ *     tags: [Project]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - projectID
+ *               - projectName
+ *               - projectDescription
+ *               - projectEndDate
+ *               - managerID
+ *             properties:
+ *               projectID:
+ *                 type: string
+ *               projectName:
+ *                 type: string
+ *               projectDescription:
+ *                 type: string
+ *               projectEndDate:
+ *                 type: string
+ *                 format: date
+ *               managerID:
+ *                 type: integer
+ *               userIDs:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *     responses:
+ *       200:
+ *         description: Project updated successfully
+ *       400:
+ *         description: Invalid input
+ *       404:
+ *         description: Project not found
+ *       500:
+ *         description: Internal server error
+ */
 router.put("/projects", projectController.update);
+
+/**
+ * @swagger
+ * /projects:
+ *   delete:
+ *     summary: Delete a project
+ *     tags: [Project]
+ *     parameters:
+ *       - in: query
+ *         name: projectID
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Project ID
+ *     responses:
+ *       200:
+ *         description: Project deleted successfully
+ *       404:
+ *         description: Project not found
+ *       500:
+ *         description: Internal server error
+ */
 router.delete("/projects", projectController.delete);
 
-// Project Manager routes
+/**
+ * @swagger
+ * /projectManager:
+ *   put:
+ *     summary: Update a project manager
+ *     tags: [ProjectManager]
+ *     parameters:
+ *       - in: query
+ *         name: userID
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: User ID
+ *       - in: query
+ *         name: managerID
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Manager ID
+ *     responses:
+ *       200:
+ *         description: Project manager updated successfully
+ *       400:
+ *         description: Invalid input
+ *       404:
+ *         description: Project manager not found
+ *       500:
+ *         description: Internal server error
+ */
 router.put("/projectManager", projectManagerController.update);
-router.get("/projectAdminAndManager/passwords/:id", projectManagerController.findManagerAndAdminPassword);
+
+/**
+ * @swagger
+ * /projectManager/{id}:
+ *   get:
+ *     summary: Get manager ID by user ID
+ *     tags: [ProjectManager]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: User ID
+ *     responses:
+ *       200:
+ *         description: Manager ID retrieved successfully
+ *       404:
+ *         description: Manager not found
+ *       500:
+ *         description: Internal server error
+ */
+router.get("/projectManager/:id", projectManagerController.findManagerID);
+
+/**
+ * @swagger
+ * /projectManager:
+ *   delete:
+ *     summary: Delete a project manager
+ *     tags: [ProjectManager]
+ *     parameters:
+ *       - in: query
+ *         name: managerID
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Manager ID
+ *     responses:
+ *       200:
+ *         description: Project manager deleted successfully
+ *       404:
+ *         description: Project manager not found
+ *       500:
+ *         description: Internal server error
+ */
 router.delete("/projectManager", projectManagerController.delete);
 
-// Log User routes
+/**
+ * @swagger
+ * /user-logs:
+ *   post:
+ *     summary: Create a user log
+ *     tags: [LogUser]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userID
+ *               - activityName
+ *               - activityDescription
+ *             properties:
+ *               userID:
+ *                 type: integer
+ *               activityName:
+ *                 type: string
+ *               activityDescription:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: User log created successfully
+ *       400:
+ *         description: Invalid input
+ *       500:
+ *         description: Internal server error
+ */
 router.post("/user-logs", logUserController.create);
+
+/**
+ * @swagger
+ * /user-logs/{userID}:
+ *   get:
+ *     summary: Get user logs by user ID
+ *     tags: [LogUser]
+ *     parameters:
+ *       - in: path
+ *         name: userID
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: User ID
+ *     responses:
+ *       200:
+ *         description: User logs retrieved successfully
+ *       404:
+ *         description: User logs not found
+ *       500:
+ *         description: Internal server error
+ */
 router.get("/user-logs/:userID", logUserController.findUserLogs);
+
+/**
+ * @swagger
+ * /user-logs/lastLogins/{userID}:
+ *   get:
+ *     summary: Get last login dates by user ID
+ *     tags: [LogUser]
+ *     parameters:
+ *       - in: path
+ *         name: userID
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: User ID
+ *     responses:
+ *       200:
+ *         description: Last login dates retrieved successfully
+ *       500:
+ *         description: Internal server error
+ */
 router.get("/user-logs/lastLogins/:userID", logUserController.lastLoginDates);
 
-// Log Project routes
+/**
+ * @swagger
+ * /project-logs:
+ *   post:
+ *     summary: Create a project log
+ *     tags: [LogProject]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - projectID
+ *               - userID
+ *               - activityName
+ *               - activityDescription
+ *             properties:
+ *               projectID:
+ *                 type: integer
+ *               userID:
+ *                 type: integer
+ *               activityName:
+ *                 type: string
+ *               activityDescription:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Project log created successfully
+ *       400:
+ *         description: Invalid input
+ *       500:
+ *         description: Internal server error
+ */
 router.post("/project-logs", logController.create);
+
+/**
+ * @swagger
+ * /project-logs/{projectID}:
+ *   get:
+ *     summary: Get project logs by project ID
+ *     tags: [LogProject]
+ *     parameters:
+ *       - in: path
+ *         name: projectID
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Project ID
+ *     responses:
+ *       200:
+ *         description: Project logs retrieved successfully
+ *       404:
+ *         description: Project logs not found
+ *       500:
+ *         description: Internal server error
+ */
 router.get("/project-logs/:projectID", logController.findProjectLogs);
 
 module.exports = router;

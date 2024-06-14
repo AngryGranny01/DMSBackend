@@ -26,7 +26,7 @@ exports.update = (req, res) => {
 };
 
 // Retrieve a specific managerID by userID
-exports.findManagerAndAdminPassword = (req, res) => {
+exports.findManagerID = (req, res) => {
     ProjectManager.getProjectManager(req.params.id, (err, data) => {
         if (err) {
             return res.status(500).send({
@@ -41,7 +41,6 @@ exports.findManagerAndAdminPassword = (req, res) => {
         }
     });
 };
-
 // Delete a User by ID
 exports.delete = (req, res) => {
     // Call the remove method of the User model with the userId query parameter
