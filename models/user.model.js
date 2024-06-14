@@ -308,7 +308,7 @@ User.findByEmail = async (email) => {
     }
   };
 
-  User.isProjectManager = async (userID) => {
+  User.findRole = async (userID) => {
     let conn;
     try {
       conn = await connectionPool.promise().getConnection();

@@ -33,7 +33,7 @@ const limiter = rateLimit({
 app.use(limiter);
 
 // Serve Swagger documentation
-app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerSpec));
+app.use('/DMSSystemAPI/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerSpec));
 
 // Use the router
 app.use('/DMSSystemAPI', router);

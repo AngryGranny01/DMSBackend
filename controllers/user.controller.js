@@ -125,7 +125,7 @@ exports.login = (req, res) => {
                 return res.status(401).send({ message: 'Invalid password' });
             }
 
-            User.isProjectManager(user.userID)
+            User.findRole(user.userID)
                 .then(isProjectManager => {
                     const userRole = user.isAdmin ? Role.ADMIN : isProjectManager ? Role.PROJECT_MANAGER : Role.USER;
 
@@ -139,8 +139,15 @@ exports.login = (req, res) => {
                         orgEinheit: user.orgEinheit,
                         role: userRole
                     };
-
-                    res.send({ user: userData });
+                    const tokenData = {
+                        userID: user.userID,
+                        userName: user.userName,
+                        email: user.email,
+                        role: userRole
+                    }
+                    // Generate JWT token
+                    const token = jwt.sign(tokenData, JWT_SECRET, { expiresIn: '1h' });
+                    res.send({ user: userData, token: token });
                 })
                 .catch(error => {
                     console.error('Error checking project manager status:', error);
