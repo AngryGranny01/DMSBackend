@@ -9,6 +9,7 @@ const projectManagerController = require("./controllers/projectManager.controlle
 const { userValidationRules, validate } = require('./middleware/validation');
 const authenticateToken = require('./middleware/auth');
 
+//---------------------------------------------- User Routes ----------------------------------------------//
 /**
  * @swagger
  * /login:
@@ -69,7 +70,7 @@ router.post('/login', userController.login);
  *       500:
  *         description: Internal server error
  */
-router.post("/users", userValidationRules(), validate, authenticateToken,userController.create);
+router.post("/users", userValidationRules(), validate, authenticateToken, userController.create);
 
 /**
  * @swagger
@@ -94,7 +95,7 @@ router.post("/users", userValidationRules(), validate, authenticateToken,userCon
  *       500:
  *         description: Internal server error
  */
-router.get("/users/checkEmailExist", authenticateToken,userController.checkIfEmailExist);
+router.get("/users/checkEmailExist", authenticateToken, userController.checkIfEmailExist);
 
 /**
  * @swagger
@@ -119,7 +120,7 @@ router.get("/users/checkEmailExist", authenticateToken,userController.checkIfEma
  *       500:
  *         description: Internal server error
  */
-router.get("/users/checkUsernameExist", authenticateToken,userController.checkIfUsernameExist);
+router.get("/users/checkUsernameExist", authenticateToken, userController.checkIfUsernameExist);
 
 /**
  * @swagger
@@ -142,7 +143,7 @@ router.get("/users/checkUsernameExist", authenticateToken,userController.checkIf
  *       500:
  *         description: Internal server error
  */
-router.get("/user/:userID", authenticateToken ,userController.findOne);
+router.get("/user/:userID", authenticateToken, userController.findOne);
 
 /**
  * @swagger
@@ -165,7 +166,7 @@ router.get("/user/:userID", authenticateToken ,userController.findOne);
  *       500:
  *         description: Internal server error
  */
-router.get("/users/findSalt", authenticateToken ,userController.findSalt);
+router.get("/users/findSalt", authenticateToken, userController.findSalt);
 
 /**
  * @swagger
@@ -179,7 +180,7 @@ router.get("/users/findSalt", authenticateToken ,userController.findSalt);
  *       500:
  *         description: Internal server error
  */
-router.get("/users", authenticateToken ,userController.getAllUsers);
+router.get("/users", authenticateToken, userController.getAllUsers);
 
 /**
  * @swagger
@@ -202,7 +203,7 @@ router.get("/users", authenticateToken ,userController.getAllUsers);
  *       500:
  *         description: Internal server error
  */
-router.delete("/users/:userID",authenticateToken, userController.delete);
+router.delete("/users/:userID", authenticateToken, userController.delete);
 
 /**
  * @swagger
@@ -234,7 +235,7 @@ router.delete("/users/:userID",authenticateToken, userController.delete);
  *       500:
  *         description: Internal server error
  */
-router.put("/users",authenticateToken, userController.update);
+router.put("/users", authenticateToken, userController.update);
 
 /**
  * @swagger
@@ -263,6 +264,8 @@ router.put("/users",authenticateToken, userController.update);
  */
 router.put("/verifyToken", userController.verifyToken);
 
+
+//---------------------------------------------- Project Routes ----------------------------------------------//
 /**
  * @swagger
  * /projects:
@@ -483,6 +486,8 @@ router.get("/projectManager/:id", authenticateToken,projectManagerController.fin
  */
 router.delete("/projectManager", authenticateToken,projectManagerController.delete);
 
+
+//---------------------------------------------- Log Routes ----------------------------------------------//
 /**
  * @swagger
  * /user-logs:
