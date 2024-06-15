@@ -9,7 +9,7 @@ const userValidationRules = () => {
 
 const validate = (req, res, next) => {
     const errors = validationResult(req);
-    console.log("Validation triggered");
+
     if (errors.isEmpty()) {
         return next();
     }

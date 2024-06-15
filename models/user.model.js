@@ -34,8 +34,20 @@ User.create = async (userData) => {
             salt: ""
         };
 
-        const insertUserSql = 'INSERT INTO user SET ?';
-        const [rowsUser] = await conn.query(insertUserSql, user);
+        const insertUserSql = `
+            INSERT INTO user 
+            (userName, firstName, lastName, email, orgEinheit, isAdmin, passwordHash, salt) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+        const [rowsUser] = await conn.execute(insertUserSql, [
+            user.userName,
+            user.firstName,
+            user.lastName,
+            user.email,
+            user.orgEinheit,
+            user.isAdmin,
+            user.passwordHash,
+            user.salt
+        ]);
 
         // Generate token for email verification
         const token = generateToken(rowsUser.insertId);
@@ -45,7 +57,7 @@ User.create = async (userData) => {
 
         // Insert the user as a project manager if applicable
         if (isProjectManager) {
-            await conn.query('INSERT INTO ProjectManager (userID) VALUES (?)', [rowsUser.insertId]);
+            await conn.execute('INSERT INTO ProjectManager (userID) VALUES (?)', [rowsUser.insertId]);
         }
 
         await conn.commit();
@@ -66,12 +78,12 @@ User.getAll = async (response) => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
-        const [userRows] = await conn.query("SELECT * FROM user");
+        const [userRows] = await conn.execute("SELECT * FROM user");
 
         const users = [];
         for (const userRow of userRows) {
             let role;
-            const [managerRows] = await conn.query("SELECT COUNT(*) AS isProjectManager FROM projectmanager WHERE userID = ?", userRow.userID);
+            const [managerRows] = await conn.execute("SELECT COUNT(*) AS isProjectManager FROM projectmanager WHERE userID = ?", [userRow.userID]);
             if (userRow.isAdmin === 1) {
                 role = Role.ADMIN;
             } else if (managerRows[0].isProjectManager === 1) {
@@ -111,7 +123,7 @@ User.updateByID = async (user, response) => {
 
         let { passwordHash, salt } = user;
         if (!passwordHash) {
-            const [rows] = await conn.query('SELECT passwordHash, salt FROM user WHERE userID = ?', [user.userID]);
+            const [rows] = await conn.execute('SELECT passwordHash, salt FROM user WHERE userID = ?', [user.userID]);
             if (rows.length > 0) {
                 passwordHash = rows[0].passwordHash;
                 salt = rows[0].salt;
@@ -121,7 +133,7 @@ User.updateByID = async (user, response) => {
         }
 
         const isAdmin = user.role === Role.ADMIN;
-        await conn.query(
+        await conn.execute(
             `UPDATE user 
              SET userName = ?, firstName = ?, lastName = ?, email = ?, passwordHash = ?, salt = ?, isAdmin = ?, orgEinheit = ?
              WHERE userID = ?`,
@@ -129,9 +141,9 @@ User.updateByID = async (user, response) => {
         );
 
         if (user.role === Role.PROJECT_MANAGER || isAdmin) {
-            const [managerRows] = await conn.query("SELECT * FROM projectmanager WHERE userID = ?", user.userID);
+            const [managerRows] = await conn.execute("SELECT * FROM projectmanager WHERE userID = ?", [user.userID]);
             if (managerRows.length === 0) {
-                await conn.query("INSERT INTO projectmanager (userID) VALUES (?)", [user.userID]);
+                await conn.execute("INSERT INTO projectmanager (userID) VALUES (?)", [user.userID]);
             }
         }
 
@@ -155,11 +167,11 @@ User.remove = async (userID, response) => {
         conn = await connectionPool.promise().getConnection();
         await conn.beginTransaction();
 
-        await conn.query("DELETE FROM activitylog WHERE userID = ?", userID);
-        await conn.query("DELETE FROM activitylogUser WHERE userID = ?", userID);
-        await conn.query("DELETE FROM project_user WHERE userID = ?", userID);
-        await conn.query("DELETE FROM projectmanager WHERE userID = ?", userID);
-        const [userDeleteResult] = await conn.query("DELETE FROM user WHERE userID = ?", userID);
+        await conn.execute("DELETE FROM activitylog WHERE userID = ?", [userID]);
+        await conn.execute("DELETE FROM activitylogUser WHERE userID = ?", [userID]);
+        await conn.execute("DELETE FROM project_user WHERE userID = ?", [userID]);
+        await conn.execute("DELETE FROM projectmanager WHERE userID = ?", [userID]);
+        const [userDeleteResult] = await conn.execute("DELETE FROM user WHERE userID = ?", [userID]);
 
         await conn.commit();
         response(null, userDeleteResult.affectedRows);
@@ -179,7 +191,7 @@ User.checkIfEmailAlreadyUsed = async (email, response) => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
-        const [rows] = await conn.query("SELECT * FROM user WHERE email = ?", email);
+        const [rows] = await conn.execute("SELECT * FROM user WHERE email = ?", [email]);
         response(null, { exist: rows.length > 0 });
     } catch (err) {
         response(err, null);
@@ -195,7 +207,7 @@ User.isUsernameAlreadyUsed = async (username, response) => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
-        const [rows] = await conn.query("SELECT * FROM user WHERE userName = ?", username);
+        const [rows] = await conn.execute("SELECT * FROM user WHERE userName = ?", [username]);
         response(null, { exist: rows.length > 0 });
     } catch (err) {
         response(err, null);
@@ -211,7 +223,7 @@ User.checkPassword = async (email, response) => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
-        const [rows] = await conn.query("SELECT passwordHash, userID FROM user WHERE email = ?", email);
+        const [rows] = await conn.execute("SELECT passwordHash, userID FROM user WHERE email = ?", [email]);
         response(null, rows.length === 0 ? null : { passwordHash: rows[0].passwordHash, userID: rows[0].userID });
     } catch (err) {
         response(err, null);
@@ -227,11 +239,11 @@ User.findByID = async (userID, response) => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
-        const [rows] = await conn.query("SELECT * FROM user WHERE userID = ?", userID);
+        const [rows] = await conn.execute("SELECT * FROM user WHERE userID = ?", [userID]);
 
         if (rows.length > 0) {
             const userData = rows[0];
-            const [managerRows] = await conn.query("SELECT COUNT(*) AS isProjectManager FROM projectmanager WHERE userID = ?", userData.userID);
+            const [managerRows] = await conn.execute("SELECT COUNT(*) AS isProjectManager FROM projectmanager WHERE userID = ?", [userData.userID]);
 
             const role = userData.isAdmin === 1 ? Role.ADMIN :
                 managerRows[0].isProjectManager === 1 ? Role.PROJECT_MANAGER : Role.USER;
@@ -264,11 +276,11 @@ User.updatePassword = async (userID, passwordHash, salt, response) => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
-        const [res] = await conn.query('SELECT passwordHash FROM user WHERE userID = ?', [userID]);
+        const [res] = await conn.execute('SELECT passwordHash FROM user WHERE userID = ?', [userID]);
 
         if (res[0].passwordHash === "") {
             await conn.beginTransaction();
-            await conn.query(`UPDATE user SET passwordHash = ?, salt = ? WHERE userID = ?`, [passwordHash, salt, userID]);
+            await conn.execute(`UPDATE user SET passwordHash = ?, salt = ? WHERE userID = ?`, [passwordHash, salt, userID]);
             await conn.commit();
             response(null, `User with ID ${userID} updated successfully`);
         } else {
@@ -293,7 +305,7 @@ User.findByEmail = async (email) => {
     try {
         conn = await connectionPool.promise().getConnection();
         const query = 'SELECT * FROM user WHERE email = ?';
-        const [rows] = await conn.query(query, [email]);
+        const [rows] = await conn.execute(query, [email]);
         if (rows.length === 0) {
             return null;
         }
@@ -313,7 +325,7 @@ User.findRole = async (userID) => {
     try {
         conn = await connectionPool.promise().getConnection();
         const query = 'SELECT COUNT(*) AS count FROM projectmanager WHERE userID = ?';
-        const [rows] = await conn.query(query, [userID]);
+        const [rows] = await conn.execute(query, [userID]);
         return rows[0].count > 0;
     } catch (error) {
         console.error('Error checking if user is project manager:', error);
@@ -325,12 +337,11 @@ User.findRole = async (userID) => {
     }
 };
 
-
 User.findSaltByEmail = async (email) => {
     let conn;
     try {
       conn = await connectionPool.promise().getConnection();
-      const [rows] = await conn.query('SELECT salt FROM User WHERE email = ?', [email]);
+      const [rows] = await conn.execute('SELECT salt FROM User WHERE email = ?', [email]);
       if (rows.length === 0) {
         throw new Error('No user found with this email');
       }
@@ -343,5 +354,6 @@ User.findSaltByEmail = async (email) => {
         conn.release();
       }
     }
-  };
+};
+
 module.exports = { User };

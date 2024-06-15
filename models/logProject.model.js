@@ -17,8 +17,7 @@ LogProject.create = async (log, result) => {
     try {
         conn = await connectionPool.promise().getConnection();
         await conn.beginTransaction();
-        console.log("Log entry")
-        console.log("Log entry: " + log)
+
         // Insert Log data into the database
         const insertLogSql = 'INSERT INTO activityLog SET ?';
 

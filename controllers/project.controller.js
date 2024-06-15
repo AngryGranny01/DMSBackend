@@ -19,8 +19,10 @@ exports.create = async (req, res) => {
     managerID: data.managerID,
   };
 
+  // Convert userIDs to a simple array of numbers
+  const userIDs = data.userIDs.map(user => user.userID);
   try {
-    const project = await Project.create(projectData, data.userIDs);
+    const project = await Project.create(projectData, userIDs);
     res.status(201).send({ projectID: project.projectID });
   } catch (error) {
     console.error('Error creating project:', error);
@@ -74,13 +76,16 @@ exports.update = async (req, res) => {
     });
   }
 
+  const data = req.body
+  // Convert userIDs to a simple array of numbers
+  const userIDs = data.userIDs.map(user => user.userID);
   const projectData = {
-    projectID: req.body.projectID,
-    projectName: req.body.projectName,
-    projectDescription: req.body.projectDescription,
-    projectEndDate: req.body.projectEndDate,
-    managerID: req.body.managerID,
-    userIDs: req.body.userIDs
+    projectID: data.projectID,
+    projectName: data.projectName,
+    projectDescription: data.projectDescription,
+    projectEndDate: data.projectEndDate,
+    managerID: data.managerID,
+    userIDs: userIDs
   };
 
   try {
@@ -100,7 +105,7 @@ exports.update = async (req, res) => {
 exports.delete = async (req, res) => {
   try {
     const projectID = req.query.projectID;
-    
+
     if (!projectID) {
       return res.status(400).send({
         message: "Project ID is required"

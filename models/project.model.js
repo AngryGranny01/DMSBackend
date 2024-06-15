@@ -16,15 +16,40 @@ Project.create = async (newProject, userIDs) => {
         conn = await connectionPool.promise().getConnection();
         newProject.projectID = await Project.generateProjectID();
 
-        const query = 'INSERT INTO project SET ?';
-        await conn.query(query, newProject);
+        const insertProjectSql = `
+            INSERT INTO project 
+            (projectID, projectName, projectDescription, projectEndDate, managerID) 
+            VALUES (?, ?, ?, ?, ?)`;
+
+        const projectData = [
+            newProject.projectID,
+            newProject.projectName,
+            newProject.projectDescription,
+            new Date(newProject.projectEndDate),
+            newProject.managerID
+        ];
+
+        console.log(projectData)
+
+        await conn.execute(insertProjectSql, projectData);
+   
+        // Retrieve the userID of the project manager from the ProjectManager table
+        const [managerRow] = await conn.execute('SELECT userID FROM ProjectManager WHERE managerID = ?', [newProject.managerID]);
+        if (managerRow.length === 0) {
+            throw new Error('Project manager not found.');
+        }
+        const managerUserID = managerRow[0].userID;
+
+        console.log(userIDs)
+        // Ensure the project manager's userID is included in the userIDs array
+        if (!userIDs.includes(managerUserID)) {
+            userIDs.push(managerUserID);
+        }
 
         if (userIDs && userIDs.length > 0) {
-            const [existingUsers] = await conn.query('SELECT userID FROM User WHERE userID IN (?)', [userIDs]);
-            const existingUserIDs = existingUsers.map(user => user.userID);
-
-            for (const userID of existingUserIDs) {
-                await conn.query("INSERT INTO Project_User (userID, projectID) VALUES (?, ?)", [userID, newProject.projectID]);
+            const insertProjectUserSql = "INSERT INTO Project_User (userID, projectID) VALUES (?, ?)";
+            for (const user of userIDs) {
+                await conn.execute(insertProjectUserSql, [user, newProject.projectID]);
             }
         }
         return newProject;
@@ -37,6 +62,8 @@ Project.create = async (newProject, userIDs) => {
         }
     }
 };
+
+
 
 
 Project.getAll = async () => {
@@ -97,6 +124,7 @@ Project.findByUserID = async (userID) => {
         `;
 
         const [projectRows] = await conn.query(query, [userID]);
+        console.log(projectRows)
 
         const projects = [];
 
@@ -170,12 +198,7 @@ Project.updateByID = async (projectData) => {
         await conn.query("DELETE FROM Project_User WHERE projectID = ?", [projectData.projectID]);
 
         if (projectData.userIDs && projectData.userIDs.length > 0) {
-            // Validate that each userID exists in the User table
-            const [existingUsers] = await conn.query('SELECT userID FROM User WHERE userID IN (?)', [projectData.userIDs]);
-            const existingUserIDs = existingUsers.map(user => user.userID);
-
-            // Insert only valid userIDs
-            for (const userID of existingUserIDs) {
+            for (const userID of projectData.userIDs) {
                 await conn.query("INSERT INTO Project_User (userID, projectID) VALUES (?, ?)", [userID, projectData.projectID]);
             }
         }

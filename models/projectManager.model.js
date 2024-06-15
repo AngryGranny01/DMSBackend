@@ -69,8 +69,6 @@ ProjectManager.remove = async (managerID, result)=> {
     try {
         conn = await connectionPool.promise().getConnection();
         await conn.beginTransaction();
-        console.log("Im Called")
-        console.log(managerID)
 
         const [deleteResult] = await conn.query("DELETE FROM ProjectManager WHERE managerID = ?", managerID);
 

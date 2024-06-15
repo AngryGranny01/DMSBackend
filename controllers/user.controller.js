@@ -116,8 +116,7 @@ exports.login = (req, res) => {
             if (!user) {
                 return res.status(404).send({ message: 'User not found' });
             }
-            console.log(hashedPassword)
-            console.log(user.passwordHash)
+
             if (hashedPassword !== user.passwordHash) {
                 return res.status(401).send({ message: 'Invalid password' });
             }
