@@ -166,7 +166,7 @@ router.get("/user/:userID", authenticateToken, userController.findOne);
  *       500:
  *         description: Internal server error
  */
-router.get("/users/findSalt", authenticateToken, userController.findSalt);
+router.get("/users/findSalt", userController.findSalt);
 
 /**
  * @swagger

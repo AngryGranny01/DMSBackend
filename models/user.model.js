@@ -291,32 +291,52 @@ User.updatePassword = async (userID, passwordHash, salt, response) => {
 User.findByEmail = async (email) => {
     let conn;
     try {
-      conn = await connectionPool.promise().getConnection();
-      const query = 'SELECT * FROM user WHERE email = ?';
-      const [rows] = await conn.query(query, [email]);
-      if (rows.length === 0) {
-        return null;
-      }
-      return rows[0];
+        conn = await connectionPool.promise().getConnection();
+        const query = 'SELECT * FROM user WHERE email = ?';
+        const [rows] = await conn.query(query, [email]);
+        if (rows.length === 0) {
+            return null;
+        }
+        return rows[0];
     } catch (error) {
-      console.error('Error finding user by email:', error);
-      throw error;
+        console.error('Error finding user by email:', error);
+        throw error;
     } finally {
-      if (conn) {
-        conn.release();
-      }
+        if (conn) {
+            conn.release();
+        }
     }
-  };
+};
 
-  User.findRole = async (userID) => {
+User.findRole = async (userID) => {
+    let conn;
+    try {
+        conn = await connectionPool.promise().getConnection();
+        const query = 'SELECT COUNT(*) AS count FROM projectmanager WHERE userID = ?';
+        const [rows] = await conn.query(query, [userID]);
+        return rows[0].count > 0;
+    } catch (error) {
+        console.error('Error checking if user is project manager:', error);
+        throw error;
+    } finally {
+        if (conn) {
+            conn.release();
+        }
+    }
+};
+
+
+User.findSaltByEmail = async (email) => {
     let conn;
     try {
       conn = await connectionPool.promise().getConnection();
-      const query = 'SELECT COUNT(*) AS count FROM projectmanager WHERE userID = ?';
-      const [rows] = await conn.query(query, [userID]);
-      return rows[0].count > 0;
+      const [rows] = await conn.query('SELECT salt FROM User WHERE email = ?', [email]);
+      if (rows.length === 0) {
+        throw new Error('No user found with this email');
+      }
+      return rows[0].salt;
     } catch (error) {
-      console.error('Error checking if user is project manager:', error);
+      console.error('Error fetching salt:', error);
       throw error;
     } finally {
       if (conn) {
@@ -324,5 +344,4 @@ User.findByEmail = async (email) => {
       }
     }
   };
-
 module.exports = { User };

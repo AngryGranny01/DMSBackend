@@ -1,7 +1,6 @@
 const { User } = require("../models/user.model");
 const jwt = require('jsonwebtoken');
 const { JWT_SECRET } = require("../constants/env");
-const EncryptionService = require('../service/encryptionService');
 const { Role } = require("../models/role");
 
 // Create a new user
@@ -29,18 +28,18 @@ exports.getAllUsers = (req, res) => {
 };
 
 // Retrieve salt by email
-exports.findSalt = (req, res) => {
-    User.findSaltByEmail(req.query.email, (err, salt) => {
-        if (err) {
-            return res.status(500).send({ message: err.message || 'An error occurred while retrieving the Salt.' });
+exports.findSalt = async (req, res) => {
+    try {
+        const email = req.query.email;
+        if (!email) {
+            return res.status(400).send({ message: 'Email is required' });
         }
-        if (!salt) {
-            return res.status(404).send({ message: `Salt with email ${req.query.email} was not found.` });
-        }
+        const salt = await User.findSaltByEmail(email);
         res.send(salt);
-    });
+    } catch (error) {
+        res.status(500).send({ message: error.message || 'An error occurred while retrieving the salt.' });
+    }
 };
-
 // Retrieve a specific User by ID
 exports.findOne = (req, res) => {
     User.findByID(req.params.userID, (err, user) => {
@@ -110,17 +109,15 @@ exports.checkIfUsernameExist = (req, res) => {
 
 // Check login credentials
 exports.login = (req, res) => {
-    const { email, passwordPlain } = req.body;
+    const { email, hashedPassword } = req.body;
 
     User.findByEmail(email)
         .then(user => {
             if (!user) {
                 return res.status(404).send({ message: 'User not found' });
             }
-
-            const encryptionService = new EncryptionService();
-            const hashedPassword = encryptionService.getPBKDF2Key(passwordPlain, user.salt);
-
+            console.log(hashedPassword)
+            console.log(user.passwordHash)
             if (hashedPassword !== user.passwordHash) {
                 return res.status(401).send({ message: 'Invalid password' });
             }
