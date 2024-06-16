@@ -320,7 +320,7 @@ User.findByEmail = async (email) => {
     }
 };
 
-User.findRole = async (userID) => {
+User.isProjectManager = async (userID) => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();

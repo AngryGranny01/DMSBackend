@@ -121,7 +121,7 @@ exports.login = (req, res) => {
                 return res.status(401).send({ message: 'Invalid password' });
             }
 
-            User.findRole(user.userID)
+            User.isProjectManager(user.userID)
                 .then(isProjectManager => {
                     const userRole = user.isAdmin ? Role.ADMIN : isProjectManager ? Role.PROJECT_MANAGER : Role.USER;
 
