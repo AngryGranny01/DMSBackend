@@ -10,7 +10,6 @@ const LogUser = function (log, timeStamp, user) {
     this.lastName = user.lastName;
 };
 
-
 // Create a new LogUser entry
 LogUser.create = async (log, result) => {
     let conn;
@@ -19,14 +18,14 @@ LogUser.create = async (log, result) => {
         await conn.beginTransaction();
 
         // Insert LogUser data into the database
-        const insertLogSql = 'INSERT INTO activityLogUser SET ?';
-        const logData = {
-            activityDescription: log.activityDescription,
-            activityName: log.activityName,
-            userID: log.userID,
-            timeStampUser: new Date()
-        };
-        const [rowsLog, fieldsUser] = await conn.query(insertLogSql, logData);
+        const insertLogSql = 'INSERT INTO ActivityLogUser (activityDescription, activityName, userID, timeStampUser) VALUES (?, ?, ?, ?)';
+        const logData = [
+            log.activityDescription,
+            log.activityName,
+            log.userID,
+            new Date()
+        ];
+        const [rowsLog] = await conn.execute(insertLogSql, logData);
 
         await conn.commit();
         result(null, { id: rowsLog.insertId });
@@ -68,17 +67,18 @@ LogUser.findByID = async (userID, result) => {
             FROM ActivityLog
             WHERE userID = ?
 
-            ORDER BY timeStamp DESC;`;
+            ORDER BY timeStamp DESC;
+        `;
 
         // Query the database to find the user logs by userID
-        const [logRows] = await conn.query(queryUserLog, [userID, userID]);
+        const [logRows] = await conn.execute(queryUserLog, [userID, userID]);
         const usersLog = [];
 
         // Get Name of the Log Create
-        let [userRows] = await conn.query("Select firstName, lastName from User where userID = ?", userID);
+        const [userRows] = await conn.execute("SELECT firstName, lastName FROM User WHERE userID = ?", [userID]);
 
         if (userRows.length > 0) {
-            let user = userRows[0];
+            const user = userRows[0];
             // Process log data
             for (let logRow of logRows) {
                 const log = {
@@ -86,10 +86,10 @@ LogUser.findByID = async (userID, result) => {
                     userID: logRow.userID,
                     activityName: logRow.activityName,
                     activityDescription: logRow.activityDescription,
-                    timeStamp:logRow.timeStamp,
+                    timeStamp: logRow.timeStamp,
                     firstName: user.firstName,
                     lastName: user.lastName
-                }
+                };
                 usersLog.push(log);
             }
         } else {
@@ -106,7 +106,6 @@ LogUser.findByID = async (userID, result) => {
         }
     }
 };
-
 
 LogUser.getUsersLastLogin = async (senderUserID, result) => {
     let conn;
@@ -126,7 +125,7 @@ LogUser.getUsersLastLogin = async (senderUserID, result) => {
             userID;
         `;
 
-        const [dateRows] = await conn.query(selectLastLoginSql);
+        const [dateRows] = await conn.execute(selectLastLoginSql);
         const lastLoginDates = dateRows.map(dateRow => ({
             date: dateRow.newestDate,
             userID: dateRow.userID
@@ -141,7 +140,7 @@ LogUser.getUsersLastLogin = async (senderUserID, result) => {
             conn.release();
         }
     }
-}
+};
 
 module.exports = {
     LogUser

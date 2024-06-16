@@ -115,7 +115,6 @@ exports.delete = async (req, res) => {
     const result = await Project.remove(projectID);
 
     if (result === 0) {
-      // If project not found, return 404 Not Found
       return res.status(404).send({
         message: `Project not found.`
       });

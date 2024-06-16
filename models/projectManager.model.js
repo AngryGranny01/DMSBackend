@@ -11,16 +11,16 @@ ProjectManager.updateByID = async (userID, managerID, result) => {
     try {
         conn = await connectionPool.promise().getConnection();
         await conn.beginTransaction();
-        
+
         // Query to retrieve Project Manager ID using User ID
-        const [rows] = await conn.query('SELECT managerID FROM ProjectManager WHERE userID = ?', [userID]);
-        
+        const [rows] = await conn.execute('SELECT managerID FROM ProjectManager WHERE userID = ?', [userID]);
+
         if (rows.length > 0) {
             const newManagerID = rows[0].managerID;
 
             // Update Project: Set managerID of projects where managerID = managerID to the new managerID of userID
             const updateQuery = 'UPDATE Project SET managerID = ? WHERE managerID = ?';
-            await conn.query(updateQuery, [newManagerID, managerID]);
+            await conn.execute(updateQuery, [newManagerID, managerID]);
 
             await conn.commit();
             result(null, "Project Manager updated successfully");
@@ -36,15 +36,14 @@ ProjectManager.updateByID = async (userID, managerID, result) => {
     }
 };
 
-
 // Function to get Project Manager ID by User ID
 ProjectManager.getProjectManager = async (userID, result) => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
-        
+
         // Query to retrieve Project Manager ID using User ID
-        const [rowsManager] = await conn.query('SELECT managerID FROM ProjectManager WHERE userID = ?', [userID]);
+        const [rowsManager] = await conn.execute('SELECT managerID FROM ProjectManager WHERE userID = ?', [userID]);
 
         if (rowsManager.length > 0) {
             const data = {
@@ -64,13 +63,13 @@ ProjectManager.getProjectManager = async (userID, result) => {
     }
 };
 
-ProjectManager.remove = async (managerID, result)=> {
+ProjectManager.remove = async (managerID, result) => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
         await conn.beginTransaction();
 
-        const [deleteResult] = await conn.query("DELETE FROM ProjectManager WHERE managerID = ?", managerID);
+        const [deleteResult] = await conn.execute("DELETE FROM ProjectManager WHERE managerID = ?", [managerID]);
 
         await conn.commit();
         result(null, deleteResult.affectedRows);
@@ -82,9 +81,9 @@ ProjectManager.remove = async (managerID, result)=> {
         if (conn) {
             conn.release();
         }
-    }  
+    }
 }
 
 module.exports = {
     ProjectManager
-}
+};

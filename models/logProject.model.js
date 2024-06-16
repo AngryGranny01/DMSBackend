@@ -17,18 +17,18 @@ LogProject.create = async (log, result) => {
     try {
         conn = await connectionPool.promise().getConnection();
         await conn.beginTransaction();
-
+        console.log(log)
         // Insert Log data into the database
-        const insertLogSql = 'INSERT INTO activityLog SET ?';
+        const insertLogSql = 'INSERT INTO ActivityLog (activityDescription, activityName, userID, projectID, timeStampLog) VALUES (?, ?, ?, ?, ?)';
 
-        const logData = {
-            activityDescription: log.activityDescription,
-            activityName: log.activityName,
-            userID: log.userID,
-            projectID: log.projectID,
-            timeStampLog: new Date()
-        };
-        await conn.query(insertLogSql, logData);
+        const logData = [
+            log.activityDescription,
+            log.activityName,
+            log.userID,
+            log.projectID,
+            new Date()
+        ];
+        await conn.execute(insertLogSql, logData);
 
         await conn.commit();
         result(null, null);
@@ -49,43 +49,31 @@ LogProject.findProjectLogsByID = async (projectID, result) => {
         conn = await connectionPool.promise().getConnection();
 
         const queryProjectLog = `
-            SELECT * 
-            FROM ActivityLog
-            WHERE projectID = ?
+            SELECT al.*, u.firstName, u.lastName
+            FROM ActivityLog al
+            JOIN User u ON al.userID = u.userID
+            WHERE al.projectID = ?
         `;
 
         // Query the database to find the project logs by projectID
-        const [logRows] = await conn.query(queryProjectLog, projectID);
+        const [logRows] = await conn.execute(queryProjectLog, [projectID]);
         const projectLogs = [];
 
-        // Check if any logs are found
-        if (logRows.length > 0) {
-
-            // Get Name of the Log Create
-            let [userRows] = await conn.query("Select firstName, lastName from User where userID = ?", logRows[0].userID);
-
-            if (userRows.length > 0) {
-                let user = userRows[0];
-                // Process each log row
-
-                for (let logRow of logRows) {
-                    const log = {
-                        logUserID: logRow.logID,
-                        projectID: logRow.projectID,
-                        userID: logRow.userID,
-                        activityName: logRow.activityName,
-                        activityDescription: logRow.activityDescription,
-                        timeStamp: logRow.timeStampLog,
-                        firstName: user.firstName,
-                        lastName: user.lastName
-                    };
-                    projectLogs.push(log);
-                }
-            } else {
-                // Handle case where user is not found
-                console.error(`Project Log with userID ${userID} not found.`);
-            }
+        // Process each log row and create log objects
+        for (let logRow of logRows) {
+            const log = {
+                logUserID: logRow.logID,
+                projectID: logRow.projectID,
+                userID: logRow.userID,
+                activityName: logRow.activityName,
+                activityDescription: logRow.activityDescription,
+                timeStamp: logRow.timeStampLog,
+                firstName: logRow.firstName,
+                lastName: logRow.lastName
+            };
+            projectLogs.push(log);
         }
+
         // Return projectLogs after processing all logs
         result(null, projectLogs);
     } catch (error) {
