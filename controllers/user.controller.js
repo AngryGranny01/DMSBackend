@@ -114,11 +114,11 @@ exports.login = (req, res) => {
     User.findByEmail(email)
         .then(user => {
             if (!user) {
-                return res.status(404).send({ message: 'User not found' });
+                return res.status(404).send({ message: 'Invalid User Data' });
             }
 
             if (hashedPassword !== user.passwordHash) {
-                return res.status(401).send({ message: 'Invalid password' });
+                return res.status(401).send({ message: 'Invalid User Data' });
             }
 
             User.isProjectManager(user.userID)
