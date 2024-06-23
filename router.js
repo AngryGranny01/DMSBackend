@@ -489,10 +489,10 @@ router.delete("/projectManager", authenticateToken,projectManagerController.dele
 //---------------------------------------------- Log Routes ----------------------------------------------//
 /**
  * @swagger
- * /user-logs:
+ * /logs:
  *   post:
- *     summary: Create a user log
- *     tags: [LogUser]
+ *     summary: Create a log entry
+ *     tags: [Log]
  *     requestBody:
  *       required: true
  *       content:
@@ -503,6 +503,7 @@ router.delete("/projectManager", authenticateToken,projectManagerController.dele
  *               - userID
  *               - activityName
  *               - activityDescription
+ *               - projectID
  *             properties:
  *               userID:
  *                 type: integer
@@ -510,6 +511,11 @@ router.delete("/projectManager", authenticateToken,projectManagerController.dele
  *                 type: string
  *               activityDescription:
  *                 type: string
+ *               projectID:
+ *                 oneOf:
+ *                   - type: string
+ *                   - type: null
+ *                   - type: undefined 
  *     responses:
  *       201:
  *         description: User log created successfully
@@ -518,14 +524,14 @@ router.delete("/projectManager", authenticateToken,projectManagerController.dele
  *       500:
  *         description: Internal server error
  */
-router.post("/logs", authenticateToken,logController.create);
+router.post("/logs", authenticateToken, logController.create);
 
 /**
  * @swagger
- * /user-logs/{userID}:
+ * /logs/user/{userID}:
  *   get:
  *     summary: Get user logs by user ID
- *     tags: [LogUser]
+ *     tags: [Log]
  *     parameters:
  *       - in: path
  *         name: userID
@@ -541,14 +547,14 @@ router.post("/logs", authenticateToken,logController.create);
  *       500:
  *         description: Internal server error
  */
-router.get("/logs/user/:userID", authenticateToken,logController.findUserLogs);
+router.get("/logs/user/:userID", authenticateToken, logController.findUserLogs);
 
 /**
  * @swagger
- * /user-logs/lastLogins/{userID}:
+ * /logs/lastLogins/{userID}:
  *   get:
  *     summary: Get last login dates by user ID
- *     tags: [LogUser]
+ *     tags: [Log]
  *     parameters:
  *       - in: path
  *         name: userID
@@ -562,20 +568,19 @@ router.get("/logs/user/:userID", authenticateToken,logController.findUserLogs);
  *       500:
  *         description: Internal server error
  */
-router.get("/logs/lastLogins/:userID", authenticateToken,logController.lastLoginDates);
-
+router.get("/logs/lastLogins/:userID", authenticateToken, logController.lastLoginDates);
 
 /**
  * @swagger
- * /project-logs/{projectID}:
+ * /logs/project/{projectID}:
  *   get:
  *     summary: Get project logs by project ID
- *     tags: [LogProject]
+ *     tags: [Log]
  *     parameters:
  *       - in: path
  *         name: projectID
  *         schema:
- *           type: integer
+ *           type: string
  *         required: true
  *         description: Project ID
  *     responses:
@@ -586,6 +591,8 @@ router.get("/logs/lastLogins/:userID", authenticateToken,logController.lastLogin
  *       500:
  *         description: Internal server error
  */
-router.get("/logs/project/:projectID", authenticateToken,logController.findProjectLogs);
+router.get("/logs/project/:projectID", authenticateToken, logController.findProjectLogs);
+
+module.exports = router;
 
 module.exports = router;
