@@ -56,7 +56,6 @@ exports.findUserLogs = (req, res) => {
                 message: `User Log with ID ${req.query.userID} was not found.`
             });
         } else {
-            console.log(userLogs)
             res.send(userLogs);
         }
     });

@@ -5,55 +5,56 @@ CREATE DATABASE IF NOT EXISTS dmsproject;
 USE dmsproject;
 
 -- User table
-CREATE TABLE User (
+CREATE TABLE IF NOT EXISTS User (
     userID INT PRIMARY KEY AUTO_INCREMENT,
     userName VARCHAR(255) UNIQUE NOT NULL,
     firstName VARCHAR(255) NOT NULL,
     lastName VARCHAR(255) NOT NULL,
-    email VARCHAR(255) UNIQUE NOT NULL,
+    email VARCHAR(255) UNIQUE,
     passwordHash VARCHAR(255),
     salt VARCHAR(255),
     orgEinheit VARCHAR(255),
-    isAdmin BOOLEAN NOT NULL DEFAULT FALSE
+    isAdmin BOOLEAN
 );
 
 -- ProjectManager table
-CREATE TABLE ProjectManager (
+CREATE TABLE IF NOT EXISTS ProjectManager (
     managerID INT PRIMARY KEY AUTO_INCREMENT,
     userID INT NOT NULL UNIQUE,
     FOREIGN KEY (userID) REFERENCES User(userID) 
 );
 
 -- Project table
-CREATE TABLE Project (
-    projectID VARCHAR(8) PRIMARY KEY,
-    projectDescription VARCHAR(255) NOT NULL,
-    projectName VARCHAR(255) NOT NULL,
+CREATE TABLE IF NOT EXISTS Project (
+    projectID INT PRIMARY KEY AUTO_INCREMENT,
+    projectDescription VARCHAR(255),
+    projectName VARCHAR(255),
     projectEndDate DATE, 
-    managerID INT NOT NULL,
+    managerID INT,
     FOREIGN KEY (managerID) REFERENCES ProjectManager(managerID)
 );
 
 -- Log table
-CREATE TABLE Log (
+CREATE TABLE IF NOT EXISTS Log (
     logID INT PRIMARY KEY AUTO_INCREMENT,
-    description VARCHAR(255) NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    userID INT ,
-    projectID VARCHAR(8),
-    timeStamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    description VARCHAR(255),
+    name VARCHAR(255),
+    userID INT NOT NULL,
+    projectID INT,
+    timeStamp TIMESTAMP,
     FOREIGN KEY (userID) REFERENCES User(userID),
     FOREIGN KEY (projectID) REFERENCES Project(projectID)
 );
 
 -- Project_User table
-CREATE TABLE Project_User (
+CREATE TABLE IF NOT EXISTS Project_User (
     userID INT,
-    projectID VARCHAR(8),
+    projectID INT,
     PRIMARY KEY (userID, projectID),
     FOREIGN KEY (userID) REFERENCES User(userID),
     FOREIGN KEY (projectID) REFERENCES Project(projectID)
 );
+
 
 -- Sample data
 -- Sample data for User table
@@ -85,13 +86,34 @@ INSERT INTO Log (description, name, userID, projectID, timeStamp)
 VALUES 
     ('{"userID":1,"username":"admin1","timeStamp": "","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 1, null, NOW()),
     ('{"userID":2,"username":"admin2","timeStamp": "","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 2, null, NOW()),
-    ('{"userID":3,"username":"user1","timeStamp": "","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 1, null, NOW()),
-    ('{"userID":4,"username":"user2","timeStamp": "","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 2, null, NOW()),
-    ('{"userID":5,"username":"user3","timeStamp": "","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 1, null, NOW()),
-    ('{"userID":6,"username":"user4","timeStamp": "","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 2, null, NOW()),
-    ('{"userID":7,"username":"user5","timeStamp": "","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 1, null, NOW()),
-    ('{"userID":8,"username":"user6","timeStamp": "","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 2, null, NOW()),
-    ('{"userID":9,"username":"user7","timeStamp": "","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 1, null, NOW()),
-    ('{"userID":10,"username":"user8","timeStamp": "","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 2, null, NOW()),
-    ('{"userID":11,"username":"user9","timeStamp": "","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 1, null, NOW()),
-    ('{"userID":12,"username":"user10","timeStamp": "","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 2, null, NOW());
+    ('{"userID":3,"username":"user1","timeStamp": "","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 3, null, NOW()),
+    ('{"userID":4,"username":"user2","timeStamp": "","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 4, null, NOW()),
+    ('{"userID":5,"username":"user3","timeStamp": "","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 5, null, NOW()),
+    ('{"userID":6,"username":"user4","timeStamp": "","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 6, null, NOW()),
+    ('{"userID":7,"username":"user5","timeStamp": "","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 7, null, NOW()),
+    ('{"userID":8,"username":"user6","timeStamp": "","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 8, null, NOW()),
+    ('{"userID":9,"username":"user7","timeStamp": "","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 9, null, NOW()),
+    ('{"userID":10,"username":"user8","timeStamp": "","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 10, null, NOW()),
+    ('{"userID":11,"username":"user9","timeStamp": "","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 11, null, NOW()),
+    ('{"userID":12,"username":"user10","timeStamp": "","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 12, null, NOW());
+
+
+-- Create Trigger to set projectID
+DELIMITER $$
+
+CREATE TRIGGER before_project_insert_check_id
+BEFORE INSERT
+ON project FOR EACH ROW
+BEGIN
+    DECLARE max_projectID INT;
+    
+    SELECT MAX(projectID) 
+    INTO max_projectID
+    FROM project;
+    
+    IF max_projectID < YEAR(NOW())*10000 THEN
+        SET NEW.projectID = YEAR(NOW())*10000 + 1;
+    END IF; 
+END $$
+
+DELIMITER ;

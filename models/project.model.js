@@ -12,22 +12,24 @@ Project.create = async (newProject, userIDs) => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
-        newProject.projectID = await Project.deriveProjectID();
 
         const insertProjectSql = `
             INSERT INTO project 
-            (projectID, projectName, projectDescription, projectEndDate, managerID) 
-            VALUES (?, ?, ?, ?, ?)`;
+            (projectName, projectDescription, projectEndDate, managerID) 
+            VALUES ( ?, ?, ?, ?)`;
 
         const projectData = [
-            newProject.projectID,
             newProject.projectName,
             newProject.projectDescription,
             new Date(newProject.projectEndDate),
             newProject.managerID
         ];
 
-        await conn.execute(insertProjectSql, projectData);
+        const [newProjectRow] = await conn.execute(insertProjectSql, projectData);
+
+        if (newProjectRow.length === 0) {
+            throw new Error('Project creation failed, projectID not found.');
+        }
 
         const [managerRow] = await conn.execute('SELECT userID FROM ProjectManager WHERE managerID = ?', [newProject.managerID]);
         if (managerRow.length === 0) {
@@ -42,10 +44,10 @@ Project.create = async (newProject, userIDs) => {
         if (userIDs && userIDs.length > 0) {
             const insertProjectUserSql = "INSERT INTO Project_User (userID, projectID) VALUES (?, ?)";
             for (const user of userIDs) {
-                await conn.execute(insertProjectUserSql, [user, newProject.projectID]);
+                await conn.execute(insertProjectUserSql, [user, newProjectRow.insertId]);
             }
         }
-        return newProject;
+       return newProjectRow.insertId;
     } catch (error) {
         console.error('Error creating project:', error);
         throw error;
@@ -138,7 +140,6 @@ Project.findByUserID = async (userID) => {
             }
             return projects;
         } else {
-            console.log(`No projects found for user with ID ${userID}`);
             return [];
         }
     } catch (error) {
@@ -206,7 +207,7 @@ Project.remove = async (projectID) => {
         conn = await connectionPool.promise().getConnection();
         await conn.beginTransaction();
 
-        await conn.execute("DELETE FROM ActivityLog WHERE projectID = ?", [projectID]);
+        await conn.execute("DELETE FROM Log WHERE projectID = ?", [projectID]);
         await conn.execute("DELETE FROM Project_User WHERE projectID = ?", [projectID]);
         const [result] = await conn.execute("DELETE FROM Project WHERE projectID = ?", [projectID]);
 

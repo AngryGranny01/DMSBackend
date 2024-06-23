@@ -18,10 +18,11 @@ Log.create = async (log, result) => {
     try {
         conn = await connectionPool.promise().getConnection();
         await conn.beginTransaction();
-        console.log(log)
-        var logProjectID = log.projectID
-        if(logProjectID === undefined){
-            logProjectID = null
+
+        let logProjectID = log.projectID;
+        
+        if(logProjectID === undefined || logProjectID === null) {
+            logProjectID = null;
         }
         // Insert Log data into the database
         const insertLogSql = 'INSERT INTO Log (description, name, userID, projectID, timeStamp) VALUES (?, ?, ?, ?, ?)';

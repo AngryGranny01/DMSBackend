@@ -167,8 +167,7 @@ User.remove = async (userID, response) => {
         conn = await connectionPool.promise().getConnection();
         await conn.beginTransaction();
 
-        await conn.execute("DELETE FROM activitylog WHERE userID = ?", [userID]);
-        await conn.execute("DELETE FROM activitylogUser WHERE userID = ?", [userID]);
+        await conn.execute("DELETE FROM log WHERE userID = ?", [userID]);
         await conn.execute("DELETE FROM project_user WHERE userID = ?", [userID]);
         await conn.execute("DELETE FROM projectmanager WHERE userID = ?", [userID]);
         const [userDeleteResult] = await conn.execute("DELETE FROM user WHERE userID = ?", [userID]);

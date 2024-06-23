@@ -22,8 +22,8 @@ exports.create = async (req, res) => {
   // Convert userIDs to a simple array of numbers
   const userIDs = data.userIDs.map(user => user.userID);
   try {
-    const project = await Project.create(projectData, userIDs);
-    res.status(201).send({ projectID: project.projectID });
+    const projectID = await Project.create(projectData, userIDs);
+    res.status(201).send({ projectID });
   } catch (error) {
     console.error('Error creating project:', error);
     res.status(500).send({ message: 'Internal server error' });
