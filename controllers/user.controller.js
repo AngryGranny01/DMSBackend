@@ -132,7 +132,7 @@ exports.login = (req, res) => {
                         lastName: user.lastName,
                         email: user.email,
                         salt: user.salt,
-                        orgEinheit: user.orgEinheit,
+                        orgUnit: user.orgUnit,
                         role: userRole
                     };
                     const tokenData = {

@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS User (
     email VARCHAR(255) UNIQUE,
     passwordHash VARCHAR(255),
     salt VARCHAR(255),
-    orgEinheit VARCHAR(255),
+    orgUnit VARCHAR(255),
     isAdmin BOOLEAN
 );
 
@@ -37,11 +37,11 @@ CREATE TABLE IF NOT EXISTS Project (
 -- Log table
 CREATE TABLE IF NOT EXISTS Log (
     logID INT PRIMARY KEY AUTO_INCREMENT,
-    description VARCHAR(255),
-    name VARCHAR(255),
+    activityDescription VARCHAR(255),
+    activityName VARCHAR(255),
     userID INT NOT NULL,
     projectID INT,
-    timeStamp TIMESTAMP,
+    timeStampLog TIMESTAMP,
     FOREIGN KEY (userID) REFERENCES User(userID),
     FOREIGN KEY (projectID) REFERENCES Project(projectID)
 );
@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS Project_User (
 
 -- Sample data
 -- Sample data for User table
-INSERT INTO User (userName, firstName, lastName, email, passwordHash, salt, orgEinheit, isAdmin)
+INSERT INTO User (userName, firstName, lastName, email, passwordHash, salt, orgUnit, isAdmin)
 VALUES 
     ('admin1', 'John', 'Doe', 'john@example.com','8c34c40052acd35b625a125095873f15552e6bc8d2b3ba2dd88fddba1cb3b447','c9a6cd99d8d5dcdbdb74fc73f9c96915','Einheit 1',1),
     ('admin2', 'Max', 'Mustermann', 'max@example.com','179603da775b19969f87c94e339698c9470ffff6b65046576b8f1931e01cafe4','d28e910ebed196405f8ebb0390555fde','Einheit 2',1),
@@ -82,7 +82,7 @@ VALUES
     (8);
     
 -- Insert activity logs for all users with current timestamp
-INSERT INTO Log (description, name, userID, projectID, timeStamp)
+INSERT INTO Log (activityDescription, activityName, userID, projectID, timeStampLog)
 VALUES 
     ('{"userID":1,"username":"admin1","timeStamp": "","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 1, null, NOW()),
     ('{"userID":2,"username":"admin2","timeStamp": "","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 2, null, NOW()),
@@ -102,18 +102,32 @@ VALUES
 DELIMITER $$
 
 CREATE TRIGGER before_project_insert_check_id
-BEFORE INSERT
-ON project FOR EACH ROW
+BEFORE INSERT ON project
+FOR EACH ROW
 BEGIN
     DECLARE max_projectID INT;
-    
-    SELECT MAX(projectID) 
-    INTO max_projectID
-    FROM project;
-    
-    IF max_projectID < YEAR(NOW())*10000 THEN
-        SET NEW.projectID = YEAR(NOW())*10000 + 1;
-    END IF; 
+    DECLARE new_projectID INT;
+
+    -- Get the maximum projectID currently in the table
+    SELECT MAX(projectID) INTO max_projectID FROM project;
+
+    -- Determine the current year's base ID
+    SET new_projectID = YEAR(NOW()) * 10000;
+
+    -- Check if there are no existing projects
+    IF max_projectID IS NULL THEN
+        -- If no projects exist, set the new projectID to the first for the current year
+        SET NEW.projectID = new_projectID + 1;
+    ELSE
+        -- If the maximum projectID is less than the current year's base ID
+        IF max_projectID < new_projectID THEN
+            -- Set the new projectID to be the first for the current year
+            SET NEW.projectID = new_projectID + 1;
+        ELSE
+            -- Otherwise, increment the maximum projectID by 1
+            SET NEW.projectID = max_projectID + 1;
+        END IF;
+    END IF;
 END $$
 
 DELIMITER ;

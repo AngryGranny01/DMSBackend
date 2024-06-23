@@ -62,17 +62,13 @@ exports.findUserLogs = (req, res) => {
 };
 
 exports.lastLoginDates = async (req,res) => {
-    let senderID = req.params.userID
     try {
-        // Call the getUsersLastLogin function on the LogUser model to retrieve last login dates
-        Log.getUsersLastLogin(senderID,(err, data) => {
+        Log.getUsersLastLogin((err, data) => {
             if (err) {
                 res.status(500).send({
                     message: "Some error occurred while retrieving last login dates."
                 });
             } else {
-
-                // Send the last login dates as a response
                 res.send(data);
             }
         });

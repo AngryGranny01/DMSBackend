@@ -67,7 +67,7 @@ Project.getAll = async () => {
         if (projectRows.length > 0) {
             for (const projectRow of projectRows) {
                 const managerQuery = `
-                SELECT u.userID, u.userName, u.firstName, u.lastName, u.orgEinheit
+                SELECT u.userID, u.userName, u.firstName, u.lastName, u.orgUnit
                 FROM ProjectManager AS pm
                 JOIN User AS u ON pm.userID = u.userID
                 WHERE pm.managerID = ?`;
@@ -118,7 +118,7 @@ Project.findByUserID = async (userID) => {
         if (projectRows.length > 0) {
             for (const projectRow of projectRows) {
                 const managerQuery = `
-                SELECT u.userID, u.userName, u.firstName, u.lastName, u.orgEinheit
+                SELECT u.userID, u.userName, u.firstName, u.lastName, u.orgUnit
                 FROM ProjectManager AS pm
                 JOIN User AS u ON pm.userID = u.userID
                 WHERE pm.managerID = ?`;
@@ -251,7 +251,7 @@ Project.getProjectUsers = async (projectUserRows) => {
                     lastname: userData.lastName,
                     email: userData.email,
                     role: role,
-                    orgEinheit: userData.orgEinheit
+                    orgUnit: userData.orgUnit
                 };
                 users.push(user);
             }

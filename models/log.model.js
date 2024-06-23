@@ -7,7 +7,7 @@ const Log = function (log, timeStamp, user) {
     this.userID = log.userID;
     this.activityDescription = log.activityDescription;
     this.activityName = log.activityName;
-    this.timeStamp = timeStamp;
+    this.timeStampLog = timeStamp;
     this.firstName = user.firstName;
     this.lastName = user.lastName;
 };
@@ -25,7 +25,7 @@ Log.create = async (log, result) => {
             logProjectID = null;
         }
         // Insert Log data into the database
-        const insertLogSql = 'INSERT INTO Log (description, name, userID, projectID, timeStamp) VALUES (?, ?, ?, ?, ?)';
+        const insertLogSql = 'INSERT INTO Log (activityDescription, activityName, userID, projectID, timeStampLog) VALUES (?, ?, ?, ?, ?)';
 
         const logData = [
             log.activityDescription,
@@ -34,6 +34,7 @@ Log.create = async (log, result) => {
             logProjectID,
             new Date()
         ];
+
         await conn.execute(insertLogSql, logData);
 
         await conn.commit();
@@ -73,9 +74,9 @@ Log.findLogsByProjectID = async (projectID, result) => {
                 logUserID: logRow.logID,
                 projectID: logRow.projectID,
                 userID: logRow.userID,
-                activityName: logRow.name,
-                activityDescription: logRow.description,
-                timeStamp: logRow.timeStamp,
+                activityName: logRow.activityName,
+                activityDescription: logRow.activityDescription,
+                timeStamp: logRow.timeStampLog,
                 firstName: logRow.firstName,
                 lastName: logRow.lastName
             };
@@ -103,15 +104,15 @@ Log.findLogsByUserID = async (userID, result) => {
 
         const queryUserLog = `
             SELECT logID,
-                    description,
-                    name,
+                    activityDescription,
+                    activityName,
                     userID,
                     projectID,
-                    timeStamp
+                    timeStampLog
             FROM Log
             WHERE userID = ?
 
-            ORDER BY timeStamp DESC;
+            ORDER BY timeStampLog DESC;
         `;
 
         // Query the database to find the user logs by userID
@@ -128,9 +129,9 @@ Log.findLogsByUserID = async (userID, result) => {
                 const log = {
                     logID: logRow.logID,
                     userID: logRow.userID,
-                    activityName: logRow.name,
-                    activityDescription: logRow.description,
-                    timeStamp: logRow.timeStamp,
+                    activityName: logRow.activityName,
+                    activityDescription: logRow.activityDescription,
+                    timeStamp: logRow.timeStampLog,
                     firstName: user.firstName,
                     lastName: user.lastName
                 };
@@ -151,7 +152,7 @@ Log.findLogsByUserID = async (userID, result) => {
     }
 };
 
-Log.getUsersLastLogin = async (senderUserID, result) => {
+Log.getUsersLastLogin = async (result) => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
@@ -160,11 +161,11 @@ Log.getUsersLastLogin = async (senderUserID, result) => {
         const selectLastLoginSql = `
         SELECT 
             userID,
-            MAX(timeStamp) AS newestDate
+            MAX(timeStampLog) AS newestDate
         FROM 
             Log
         WHERE 
-            name IN ('LOGIN', 'CREATE_USER')
+            activityName IN ('LOGIN', 'CREATE_USER')
         GROUP BY 
             userID;
         `;

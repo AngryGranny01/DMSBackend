@@ -568,7 +568,7 @@ router.get("/logs/user/:userID", authenticateToken, logController.findUserLogs);
  *       500:
  *         description: Internal server error
  */
-router.get("/logs/lastLogins/:userID", authenticateToken, logController.lastLoginDates);
+router.get("/logs/lastLogins", authenticateToken, logController.lastLoginDates);
 
 /**
  * @swagger

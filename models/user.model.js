@@ -10,7 +10,7 @@ const User = function (user, role) {
     this.email = user.email;
     this.passwordHash = user.passwordHash;
     this.salt = user.salt;
-    this.orgEinheit = user.orgEinheit;
+    this.orgUnit = user.orgUnit;
     this.role = role;
 };
 
@@ -28,7 +28,7 @@ User.create = async (userData) => {
             firstName: userData.firstName,
             lastName: userData.lastName,
             email: userData.email,
-            orgEinheit: userData.orgEinheit,
+            orgUnit: userData.orgUnit,
             isAdmin: isAdmin,
             passwordHash: "",
             salt: ""
@@ -36,14 +36,14 @@ User.create = async (userData) => {
 
         const insertUserSql = `
             INSERT INTO user 
-            (userName, firstName, lastName, email, orgEinheit, isAdmin, passwordHash, salt) 
+            (userName, firstName, lastName, email, orgUnit, isAdmin, passwordHash, salt) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
         const [rowsUser] = await conn.execute(insertUserSql, [
             user.userName,
             user.firstName,
             user.lastName,
             user.email,
-            user.orgEinheit,
+            user.orgUnit,
             user.isAdmin,
             user.passwordHash,
             user.salt
@@ -98,7 +98,7 @@ User.getAll = async (response) => {
                 lastName: userRow.lastName,
                 email: userRow.email,
                 salt: userRow.salt,
-                orgEinheit: userRow.orgEinheit,
+                orgUnit: userRow.orgUnit,
                 passwordHash: userRow.passwordHash,
                 role: role
             });
@@ -135,9 +135,9 @@ User.updateByID = async (user, response) => {
         const isAdmin = user.role === Role.ADMIN;
         await conn.execute(
             `UPDATE user 
-             SET userName = ?, firstName = ?, lastName = ?, email = ?, passwordHash = ?, salt = ?, isAdmin = ?, orgEinheit = ?
+             SET userName = ?, firstName = ?, lastName = ?, email = ?, passwordHash = ?, salt = ?, isAdmin = ?, orgUnit = ?
              WHERE userID = ?`,
-            [user.userName, user.firstName, user.lastName, user.email, passwordHash, salt, isAdmin, user.orgEinheit, user.userID]
+            [user.userName, user.firstName, user.lastName, user.email, passwordHash, salt, isAdmin, user.orgUnit, user.userID]
         );
 
         if (user.role === Role.PROJECT_MANAGER || isAdmin) {
@@ -253,7 +253,7 @@ User.findByID = async (userID, response) => {
                 firstName: userData.firstName,
                 lastName: userData.lastName,
                 email: userData.email,
-                orgEinheit: userData.orgEinheit,
+                orgUnit: userData.orgUnit,
                 role: role
             };
 
