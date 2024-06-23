@@ -3,8 +3,7 @@ const router = express.Router();
 
 const projectController = require("./controllers/project.controller");
 const userController = require("./controllers/user.controller");
-const logController = require("./controllers/logProject.controller");
-const logUserController = require("./controllers/logUser.controller");
+const logController = require("./controllers/log.controller");
 const projectManagerController = require("./controllers/projectManager.controller");
 const { userValidationRules, validate } = require('./middleware/validation');
 const authenticateToken = require('./middleware/auth');
@@ -519,7 +518,7 @@ router.delete("/projectManager", authenticateToken,projectManagerController.dele
  *       500:
  *         description: Internal server error
  */
-router.post("/user-logs", authenticateToken,logUserController.create);
+router.post("/logs", authenticateToken,logController.create);
 
 /**
  * @swagger
@@ -542,7 +541,7 @@ router.post("/user-logs", authenticateToken,logUserController.create);
  *       500:
  *         description: Internal server error
  */
-router.get("/user-logs/:userID", authenticateToken,logUserController.findUserLogs);
+router.get("/logs/user/:userID", authenticateToken,logController.findUserLogs);
 
 /**
  * @swagger
@@ -563,43 +562,8 @@ router.get("/user-logs/:userID", authenticateToken,logUserController.findUserLog
  *       500:
  *         description: Internal server error
  */
-router.get("/user-logs/lastLogins/:userID", authenticateToken,logUserController.lastLoginDates);
+router.get("/logs/lastLogins/:userID", authenticateToken,logController.lastLoginDates);
 
-/**
- * @swagger
- * /project-logs:
- *   post:
- *     summary: Create a project log
- *     tags: [LogProject]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - projectID
- *               - userID
- *               - activityName
- *               - activityDescription
- *             properties:
- *               projectID:
- *                 type: integer
- *               userID:
- *                 type: integer
- *               activityName:
- *                 type: string
- *               activityDescription:
- *                 type: string
- *     responses:
- *       201:
- *         description: Project log created successfully
- *       400:
- *         description: Invalid input
- *       500:
- *         description: Internal server error
- */
-router.post("/project-logs", authenticateToken,logController.create);
 
 /**
  * @swagger
@@ -622,6 +586,6 @@ router.post("/project-logs", authenticateToken,logController.create);
  *       500:
  *         description: Internal server error
  */
-router.get("/project-logs/:projectID", authenticateToken,logController.findProjectLogs);
+router.get("/logs/project/:projectID", authenticateToken,logController.findProjectLogs);
 
 module.exports = router;

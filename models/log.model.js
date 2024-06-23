@@ -1,7 +1,9 @@
 const { connectionPool } = require("./db");
 
-const LogUser = function (log, timeStamp, user) {
-    this.logUserID = log.logUserID;
+
+const Log = function (log, timeStamp, user) {
+    this.logID = log.logID;
+    this.projectID = log.projectID;
     this.userID = log.userID;
     this.activityDescription = log.activityDescription;
     this.activityName = log.activityName;
@@ -10,28 +12,34 @@ const LogUser = function (log, timeStamp, user) {
     this.lastName = user.lastName;
 };
 
-// Create a new LogUser entry
-LogUser.create = async (log, result) => {
+// Create a new Log entry
+Log.create = async (log, result) => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
         await conn.beginTransaction();
+        console.log(log)
+        var logProjectID = log.projectID
+        if(logProjectID === undefined){
+            logProjectID = null
+        }
+        // Insert Log data into the database
+        const insertLogSql = 'INSERT INTO Log (description, name, userID, projectID, timeStamp) VALUES (?, ?, ?, ?, ?)';
 
-        // Insert LogUser data into the database
-        const insertLogSql = 'INSERT INTO ActivityLogUser (activityDescription, activityName, userID, timeStampUser) VALUES (?, ?, ?, ?)';
         const logData = [
             log.activityDescription,
             log.activityName,
             log.userID,
+            logProjectID,
             new Date()
         ];
-        const [rowsLog] = await conn.execute(insertLogSql, logData);
+        await conn.execute(insertLogSql, logData);
 
         await conn.commit();
-        result(null, { id: rowsLog.insertId });
+        result(null, null);
     } catch (error) {
         await conn.rollback();
-        console.error("Error occurred while inserting a new User Log Entry: ", error);
+        console.error("Error occurred while inserting a new Log Entry: ", error);
         result(error, null);
     } finally {
         if (conn) {
@@ -40,38 +48,73 @@ LogUser.create = async (log, result) => {
     }
 };
 
+
+
+Log.findLogsByProjectID = async (projectID, result) => {
+    let conn;
+    try {
+        conn = await connectionPool.promise().getConnection();
+
+        const queryProjectLog = `
+            SELECT al.*, u.firstName, u.lastName
+            FROM log al
+            JOIN User u ON al.userID = u.userID
+            WHERE al.projectID = ?
+        `;
+
+        // Query the database to find the project logs by projectID
+        const [logRows] = await conn.execute(queryProjectLog, [projectID]);
+        const projectLogs = [];
+
+        // Process each log row and create log objects
+        for (let logRow of logRows) {
+            const log = {
+                logUserID: logRow.logID,
+                projectID: logRow.projectID,
+                userID: logRow.userID,
+                activityName: logRow.name,
+                activityDescription: logRow.description,
+                timeStamp: logRow.timeStamp,
+                firstName: logRow.firstName,
+                lastName: logRow.lastName
+            };
+            projectLogs.push(log);
+        }
+
+        // Return projectLogs after processing all logs
+        result(null, projectLogs);
+    } catch (error) {
+        console.error("Error retrieving Project Logs from database:", error);
+        result({ message: "Error retrieving Project Logs from database" }, null);
+    } finally {
+        if (conn) {
+            conn.release();
+        }
+    }
+};
+
+
 // Find all Logs by User ID
-LogUser.findByID = async (userID, result) => {
+Log.findLogsByUserID = async (userID, result) => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
 
         const queryUserLog = `
-            SELECT logUserID AS logID,
-                    activityDescription,
-                    activityName,
-                    userID,
-                    NULL AS projectID, -- Add NULL value to match the number of columns
-                    timeStampUser AS timeStamp
-            FROM ActivityLogUser
-            WHERE userID = ?
-
-            UNION
-
             SELECT logID,
-                    activityDescription,
-                    activityName,
+                    description,
+                    name,
                     userID,
                     projectID,
-                    timeStampLog AS timeStamp
-            FROM ActivityLog
+                    timeStamp
+            FROM Log
             WHERE userID = ?
 
             ORDER BY timeStamp DESC;
         `;
 
         // Query the database to find the user logs by userID
-        const [logRows] = await conn.execute(queryUserLog, [userID, userID]);
+        const [logRows] = await conn.execute(queryUserLog, [userID]);
         const usersLog = [];
 
         // Get Name of the Log Create
@@ -84,8 +127,8 @@ LogUser.findByID = async (userID, result) => {
                 const log = {
                     logID: logRow.logID,
                     userID: logRow.userID,
-                    activityName: logRow.activityName,
-                    activityDescription: logRow.activityDescription,
+                    activityName: logRow.name,
+                    activityDescription: logRow.description,
                     timeStamp: logRow.timeStamp,
                     firstName: user.firstName,
                     lastName: user.lastName
@@ -107,7 +150,7 @@ LogUser.findByID = async (userID, result) => {
     }
 };
 
-LogUser.getUsersLastLogin = async (senderUserID, result) => {
+Log.getUsersLastLogin = async (senderUserID, result) => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
@@ -116,11 +159,11 @@ LogUser.getUsersLastLogin = async (senderUserID, result) => {
         const selectLastLoginSql = `
         SELECT 
             userID,
-            MAX(timeStampUser) AS newestDate
+            MAX(timeStamp) AS newestDate
         FROM 
-            ActivityLogUser
+            Log
         WHERE 
-            activityName IN ('LOGIN', 'CREATE_USER')
+            name IN ('LOGIN', 'CREATE_USER')
         GROUP BY 
             userID;
         `;
@@ -143,5 +186,5 @@ LogUser.getUsersLastLogin = async (senderUserID, result) => {
 };
 
 module.exports = {
-    LogUser
+    Log
 };

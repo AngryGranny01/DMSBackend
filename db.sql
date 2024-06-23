@@ -34,26 +34,16 @@ CREATE TABLE Project (
     FOREIGN KEY (managerID) REFERENCES ProjectManager(managerID)
 );
 
--- ActivityLog table
-CREATE TABLE ActivityLog (
+-- Log table
+CREATE TABLE Log (
     logID INT PRIMARY KEY AUTO_INCREMENT,
-    activityDescription VARCHAR(255) NOT NULL,
-    activityName VARCHAR(255) NOT NULL,
-    userID INT NOT NULL,
-    projectID VARCHAR(8) NOT NULL,
-    timeStampLog TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    description VARCHAR(255) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    userID INT ,
+    projectID VARCHAR(8),
+    timeStamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (userID) REFERENCES User(userID),
     FOREIGN KEY (projectID) REFERENCES Project(projectID)
-);
-
--- ActivityLogUser table
-CREATE TABLE ActivityLogUser (
-    logUserID INT PRIMARY KEY AUTO_INCREMENT,
-    activityDescription VARCHAR(255),
-    activityName VARCHAR(255),
-    userID INT,
-    timeStampUser TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (userID) REFERENCES User(userID)
 );
 
 -- Project_User table
@@ -91,17 +81,17 @@ VALUES
     (8);
     
 -- Insert activity logs for all users with current timestamp
-INSERT INTO ActivityLogUser (activityDescription, activityName, userID, timeStampUser)
+INSERT INTO Log (description, name, userID, projectID, timeStamp)
 VALUES 
-    ('{"userID":1,"username":"admin1","timeStamp": "","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 1, NOW()),
-    ('{"userID":2,"username":"admin2","timeStamp": "","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 2, NOW()),
-    ('{"userID":3,"username":"user1","timeStamp": "","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 1, NOW()),
-    ('{"userID":4,"username":"user2","timeStamp": "","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 2, NOW()),
-    ('{"userID":5,"username":"user3","timeStamp": "","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 1, NOW()),
-    ('{"userID":6,"username":"user4","timeStamp": "","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 2, NOW()),
-    ('{"userID":7,"username":"user5","timeStamp": "","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 1, NOW()),
-    ('{"userID":8,"username":"user6","timeStamp": "","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 2, NOW()),
-    ('{"userID":9,"username":"user7","timeStamp": "","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 1, NOW()),
-    ('{"userID":10,"username":"user8","timeStamp": "","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 2, NOW()),
-    ('{"userID":11,"username":"user9","timeStamp": "","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 1, NOW()),
-    ('{"userID":12,"username":"user10","timeStamp": "","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 2, NOW());
+    ('{"userID":1,"username":"admin1","timeStamp": "","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 1, null, NOW()),
+    ('{"userID":2,"username":"admin2","timeStamp": "","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 2, null, NOW()),
+    ('{"userID":3,"username":"user1","timeStamp": "","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 1, null, NOW()),
+    ('{"userID":4,"username":"user2","timeStamp": "","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 2, null, NOW()),
+    ('{"userID":5,"username":"user3","timeStamp": "","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 1, null, NOW()),
+    ('{"userID":6,"username":"user4","timeStamp": "","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 2, null, NOW()),
+    ('{"userID":7,"username":"user5","timeStamp": "","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 1, null, NOW()),
+    ('{"userID":8,"username":"user6","timeStamp": "","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 2, null, NOW()),
+    ('{"userID":9,"username":"user7","timeStamp": "","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 1, null, NOW()),
+    ('{"userID":10,"username":"user8","timeStamp": "","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 2, null, NOW()),
+    ('{"userID":11,"username":"user9","timeStamp": "","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 1, null, NOW()),
+    ('{"userID":12,"username":"user10","timeStamp": "","projectName":"","projectID":"","viewedUserID":"","viewedUsername":"","filename":"","errorMessage":""}', 'CREATE_USER', 2, null, NOW());
