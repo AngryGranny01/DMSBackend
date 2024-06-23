@@ -40,6 +40,7 @@ exports.findSalt = async (req, res) => {
         res.status(500).send({ message: error.message || 'An error occurred while retrieving the salt.' });
     }
 };
+
 // Retrieve a specific User by ID
 exports.findOne = (req, res) => {
     User.findByID(req.params.userID, (err, user) => {

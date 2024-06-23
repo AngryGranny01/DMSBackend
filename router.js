@@ -54,13 +54,29 @@ router.post('/login', userController.login);
  *           schema:
  *             type: object
  *             required:
+ *               - userName
+ *               - firstName
+ *               - lastName
  *               - email
- *               - password
+ *               - orgUnit
+ *               - role
  *             properties:
+ *               userName:
+ *                 type: string
+ *               firstName:
+ *                 type: string
+ *               lastName:
+ *                 type: string
  *               email:
  *                 type: string
- *               password:
+ *               orgUnit:
  *                 type: string
+ *               role:
+ *                 type: string
+ *                 enum:
+ *                   - USER
+ *                   - PROJECT_MANAGER
+ *                   - ADMIN
  *     responses:
  *       201:
  *         description: User created successfully
@@ -87,6 +103,14 @@ router.post("/users", userValidationRules(), validate, authenticateToken, userCo
  *     responses:
  *       200:
  *         description: Email checked successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 exist:
+ *                   type: boolean
+ *                   description: Indicates whether the email exists
  *       400:
  *         description: Invalid input
  *       404:
@@ -95,6 +119,7 @@ router.post("/users", userValidationRules(), validate, authenticateToken, userCo
  *         description: Internal server error
  */
 router.get("/users/checkEmailExist", authenticateToken, userController.checkIfEmailExist);
+
 
 /**
  * @swagger
@@ -112,6 +137,14 @@ router.get("/users/checkEmailExist", authenticateToken, userController.checkIfEm
  *     responses:
  *       200:
  *         description: Username checked successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 exist:
+ *                   type: boolean
+ *                   description: Indicates whether the username exists
  *       400:
  *         description: Invalid input
  *       404:
@@ -120,6 +153,7 @@ router.get("/users/checkEmailExist", authenticateToken, userController.checkIfEm
  *         description: Internal server error
  */
 router.get("/users/checkUsernameExist", authenticateToken, userController.checkIfUsernameExist);
+
 
 /**
  * @swagger
@@ -137,12 +171,36 @@ router.get("/users/checkUsernameExist", authenticateToken, userController.checkI
  *     responses:
  *       200:
  *         description: User retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 userID:
+ *                   type: integer
+ *                 userName:
+ *                   type: string
+ *                 firstName:
+ *                   type: string
+ *                 lastName:
+ *                   type: string
+ *                 email:
+ *                   type: string
+ *                 orgUnit:
+ *                   type: string
+ *                 role:
+ *                   type: string
+ *                   enum:
+ *                     - USER
+ *                     - PROJECT_MANAGER
+ *                     - ADMIN
  *       404:
  *         description: User not found
  *       500:
  *         description: Internal server error
  */
 router.get("/user/:userID", authenticateToken, userController.findOne);
+
 
 /**
  * @swagger
@@ -160,6 +218,16 @@ router.get("/user/:userID", authenticateToken, userController.findOne);
  *     responses:
  *       200:
  *         description: Salt found successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 salt:
+ *                   type: string
+ *                   description: The salt associated with the given email
+ *       400:
+ *         description: Invalid input
  *       404:
  *         description: Salt not found
  *       500:
@@ -176,10 +244,40 @@ router.get("/users/findSalt", userController.findSalt);
  *     responses:
  *       200:
  *         description: Users retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   userID:
+ *                     type: integer
+ *                   userName:
+ *                     type: string
+ *                   firstName:
+ *                     type: string
+ *                   lastName:
+ *                     type: string
+ *                   email:
+ *                     type: string
+ *                   salt:
+ *                     type: string
+ *                   orgUnit:
+ *                     type: string
+ *                   passwordHash:
+ *                     type: string
+ *                   role:
+ *                     type: string
+ *                     enum:
+ *                       - USER
+ *                       - PROJECT_MANAGER
+ *                       - ADMIN
  *       500:
  *         description: Internal server error
  */
 router.get("/users", authenticateToken, userController.getAllUsers);
+
 
 /**
  * @swagger
@@ -204,6 +302,7 @@ router.get("/users", authenticateToken, userController.getAllUsers);
  */
 router.delete("/users/:userID", authenticateToken, userController.delete);
 
+
 /**
  * @swagger
  * /users:
@@ -218,12 +317,31 @@ router.delete("/users/:userID", authenticateToken, userController.delete);
  *             type: object
  *             required:
  *               - userID
+ *               - userName
+ *               - firstName
+ *               - lastName
  *               - email
+ *               - orgUnit
+ *               - role
  *             properties:
  *               userID:
  *                 type: string
+ *               userName:
+ *                 type: string
+ *               firstName:
+ *                 type: string
+ *               lastName:
+ *                 type: string
  *               email:
  *                 type: string
+ *               orgUnit:
+ *                 type: string
+ *               role:
+ *                 type: string
+ *                 enum:
+ *                   - USER
+ *                   - PROJECT_MANAGER
+ *                   - ADMIN
  *     responses:
  *       200:
  *         description: User updated successfully
@@ -235,6 +353,7 @@ router.delete("/users/:userID", authenticateToken, userController.delete);
  *         description: Internal server error
  */
 router.put("/users", authenticateToken, userController.update);
+
 
 /**
  * @swagger
@@ -250,8 +369,14 @@ router.put("/users", authenticateToken, userController.update);
  *             type: object
  *             required:
  *               - token
+ *               - passwordHash
+ *               - salt
  *             properties:
  *               token:
+ *                 type: string
+ *               passwordHash:
+ *                 type: string
+ *               salt:
  *                 type: string
  *     responses:
  *       200:
@@ -262,6 +387,7 @@ router.put("/users", authenticateToken, userController.update);
  *         description: Internal server error
  */
 router.put("/verifyToken", userController.verifyToken);
+
 
 
 //---------------------------------------------- Project Routes ----------------------------------------------//
@@ -282,6 +408,7 @@ router.put("/verifyToken", userController.verifyToken);
  *               - projectDescription
  *               - projectEndDate
  *               - managerID
+ *               - userIDs
  *             properties:
  *               projectName:
  *                 type: string
@@ -292,6 +419,10 @@ router.put("/verifyToken", userController.verifyToken);
  *                 format: date
  *               managerID:
  *                 type: integer
+ *               userIDs:
+ *                 type: array
+ *                 items:
+ *                   type: integer
  *     responses:
  *       201:
  *         description: Project created successfully
@@ -300,7 +431,8 @@ router.put("/verifyToken", userController.verifyToken);
  *       500:
  *         description: Internal server error
  */
-router.post("/projects",authenticateToken, projectController.create);
+router.post("/projects", authenticateToken, projectController.create);
+
 
 /**
  * @swagger
@@ -311,10 +443,57 @@ router.post("/projects",authenticateToken, projectController.create);
  *     responses:
  *       200:
  *         description: Projects retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   projectID:
+ *                     type: integer
+ *                   projectName:
+ *                     type: string
+ *                   projectDescription:
+ *                     type: string
+ *                   projectEndDate:
+ *                     type: string
+ *                     format: date
+ *                   managerID:
+ *                     type: integer
+ *                   manager:
+ *                     type: object
+ *                     properties:
+ *                       userID:
+ *                         type: integer
+ *                       userName:
+ *                         type: string
+ *                       firstName:
+ *                         type: string
+ *                       lastName:
+ *                         type: string
+ *                       orgUnit:
+ *                         type: string
+ *                   users:
+ *                     type: array
+ *                     items:
+ *                       type: object
+ *                       properties:
+ *                         userID:
+ *                           type: integer
+ *                         userName:
+ *                           type: string
+ *                         firstName:
+ *                           type: string
+ *                         lastName:
+ *                           type: string
+ *                         orgUnit:
+ *                           type: string
  *       500:
  *         description: Internal server error
  */
-router.get("/projects",authenticateToken, projectController.findAll);
+router.get("/projects", authenticateToken, projectController.findAll);
+
 
 /**
  * @swagger
@@ -332,12 +511,59 @@ router.get("/projects",authenticateToken, projectController.findAll);
  *     responses:
  *       200:
  *         description: Projects retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   projectID:
+ *                     type: integer
+ *                   projectName:
+ *                     type: string
+ *                   projectDescription:
+ *                     type: string
+ *                   projectEndDate:
+ *                     type: string
+ *                     format: date
+ *                   managerID:
+ *                     type: integer
+ *                   manager:
+ *                     type: object
+ *                     properties:
+ *                       userID:
+ *                         type: integer
+ *                       userName:
+ *                         type: string
+ *                       firstName:
+ *                         type: string
+ *                       lastName:
+ *                         type: string
+ *                       orgUnit:
+ *                         type: string
+ *                   users:
+ *                     type: array
+ *                     items:
+ *                       type: object
+ *                       properties:
+ *                         userID:
+ *                           type: integer
+ *                         userName:
+ *                           type: string
+ *                         firstName:
+ *                           type: string
+ *                         lastName:
+ *                           type: string
+ *                         orgUnit:
+ *                           type: string
  *       404:
  *         description: Projects not found
  *       500:
  *         description: Internal server error
  */
-router.get("/projects/:userID",authenticateToken, projectController.findUserProjects);
+router.get("/projects/:userID", authenticateToken, projectController.findUserProjects);
+
 
 /**
  * @swagger
@@ -357,6 +583,7 @@ router.get("/projects/:userID",authenticateToken, projectController.findUserProj
  *               - projectDescription
  *               - projectEndDate
  *               - managerID
+ *               - userIDs
  *             properties:
  *               projectID:
  *                 type: string
@@ -383,7 +610,8 @@ router.get("/projects/:userID",authenticateToken, projectController.findUserProj
  *       500:
  *         description: Internal server error
  */
-router.put("/projects", authenticateToken,projectController.update);
+router.put("/projects", authenticateToken, projectController.update);
+
 
 /**
  * @swagger
@@ -406,7 +634,8 @@ router.put("/projects", authenticateToken,projectController.update);
  *       500:
  *         description: Internal server error
  */
-router.delete("/projects", authenticateToken,projectController.delete);
+router.delete("/projects", authenticateToken, projectController.delete);
+
 
 /**
  * @swagger
@@ -437,7 +666,7 @@ router.delete("/projects", authenticateToken,projectController.delete);
  *       500:
  *         description: Internal server error
  */
-router.put("/projectManager", authenticateToken,projectManagerController.update);
+router.put("/projectManager", authenticateToken, projectManagerController.update);
 
 /**
  * @swagger
@@ -455,12 +684,19 @@ router.put("/projectManager", authenticateToken,projectManagerController.update)
  *     responses:
  *       200:
  *         description: Manager ID retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 managerID:
+ *                   type: integer
  *       404:
  *         description: Manager not found
  *       500:
  *         description: Internal server error
  */
-router.get("/projectManager/:id", authenticateToken,projectManagerController.findManagerID);
+router.get("/projectManager/:id", authenticateToken, projectManagerController.findManagerID);
 
 /**
  * @swagger
@@ -483,7 +719,7 @@ router.get("/projectManager/:id", authenticateToken,projectManagerController.fin
  *       500:
  *         description: Internal server error
  */
-router.delete("/projectManager", authenticateToken,projectManagerController.delete);
+router.delete("/projectManager", authenticateToken, projectManagerController.delete);
 
 
 //---------------------------------------------- Log Routes ----------------------------------------------//
@@ -503,7 +739,6 @@ router.delete("/projectManager", authenticateToken,projectManagerController.dele
  *               - userID
  *               - activityName
  *               - activityDescription
- *               - projectID
  *             properties:
  *               userID:
  *                 type: integer
@@ -515,7 +750,7 @@ router.delete("/projectManager", authenticateToken,projectManagerController.dele
  *                 oneOf:
  *                   - type: string
  *                   - type: null
- *                   - type: undefined 
+ *                   - type: undefined
  *     responses:
  *       201:
  *         description: User log created successfully
@@ -525,6 +760,7 @@ router.delete("/projectManager", authenticateToken,projectManagerController.dele
  *         description: Internal server error
  */
 router.post("/logs", authenticateToken, logController.create);
+
 
 /**
  * @swagger
@@ -542,6 +778,28 @@ router.post("/logs", authenticateToken, logController.create);
  *     responses:
  *       200:
  *         description: User logs retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   logID:
+ *                     type: integer
+ *                   userID:
+ *                     type: integer
+ *                   activityName:
+ *                     type: string
+ *                   activityDescription:
+ *                     type: string
+ *                   timeStamp:
+ *                     type: string
+ *                     format: date-time
+ *                   firstName:
+ *                     type: string
+ *                   lastName:
+ *                     type: string
  *       404:
  *         description: User logs not found
  *       500:
@@ -549,26 +807,34 @@ router.post("/logs", authenticateToken, logController.create);
  */
 router.get("/logs/user/:userID", authenticateToken, logController.findUserLogs);
 
+
 /**
  * @swagger
- * /logs/lastLogins/{userID}:
+ * /logs/lastLogins:
  *   get:
- *     summary: Get last login dates by user ID
+ *     summary: Get last login dates for all users
  *     tags: [Log]
- *     parameters:
- *       - in: path
- *         name: userID
- *         schema:
- *           type: integer
- *         required: true
- *         description: User ID
  *     responses:
  *       200:
  *         description: Last login dates retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   userID:
+ *                     type: integer
+ *                   date:
+ *                     type: string
+ *                     format: date-time
  *       500:
  *         description: Internal server error
  */
 router.get("/logs/lastLogins", authenticateToken, logController.lastLoginDates);
+
+
 
 /**
  * @swagger
@@ -586,6 +852,30 @@ router.get("/logs/lastLogins", authenticateToken, logController.lastLoginDates);
  *     responses:
  *       200:
  *         description: Project logs retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   logUserID:
+ *                     type: integer
+ *                   projectID:
+ *                     type: integer
+ *                   userID:
+ *                     type: integer
+ *                   activityName:
+ *                     type: string
+ *                   activityDescription:
+ *                     type: string
+ *                   timeStamp:
+ *                     type: string
+ *                     format: date-time
+ *                   firstName:
+ *                     type: string
+ *                   lastName:
+ *                     type: string
  *       404:
  *         description: Project logs not found
  *       500:
@@ -595,4 +885,3 @@ router.get("/logs/project/:projectID", authenticateToken, logController.findProj
 
 module.exports = router;
 
-module.exports = router;

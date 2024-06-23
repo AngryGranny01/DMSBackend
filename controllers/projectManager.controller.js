@@ -41,6 +41,7 @@ exports.findManagerID = (req, res) => {
         }
     });
 };
+
 // Delete a User by ID
 exports.delete = (req, res) => {
     // Call the remove method of the User model with the userId query parameter
