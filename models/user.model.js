@@ -74,7 +74,6 @@ User.getAll = async (response) => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
-        console.log("Im Called")
         // Query to get all users with their roles and deactivation status
         const query = `
             SELECT 
@@ -102,7 +101,7 @@ User.getAll = async (response) => {
         const users = userRows.map(userRow => {
             const roles = userRow.roles ? userRow.roles.split(',') : [];
             let role;
-            console.log(userRow)
+
             if (roles.includes(Role.ADMIN)) {
                 role = Role.ADMIN;
             } else if (roles.includes(Role.PROJECT_MANAGER)) {
@@ -140,39 +139,79 @@ User.updateByID = async (user, response) => {
     try {
         conn = await connectionPool.promise().getConnection();
         await conn.beginTransaction();
+        console.log(user)
 
-        let { passwordHash, salt } = user;
-        if (!passwordHash) {
-            const [rows] = await conn.execute('SELECT passwordHash, salt FROM user WHERE userID = ?', [user.userID]);
-            if (rows.length > 0) {
-                passwordHash = rows[0].passwordHash;
-                salt = rows[0].salt;
-            } else {
-                throw new Error('User not found');
-            }
+        // Find personID from accountID
+        const [accountRows] = await conn.execute('SELECT personId FROM Account WHERE id = ?', [user.accountID]);
+        if (accountRows.length === 0) {
+            throw new Error('Account not found');
         }
+        const personID = accountRows[0].personId;
 
-        const isAdmin = user.role === Role.ADMIN;
+        // Update Person table
         await conn.execute(
-            `UPDATE user 
-             SET userName = ?, firstName = ?, lastName = ?, email = ?, passwordHash = ?, salt = ?, isAdmin = ?, orgUnit = ?
-             WHERE userID = ?`,
-            [user.userName, user.firstName, user.lastName, user.email, passwordHash, salt, isAdmin, user.orgUnit, user.userID]
+            `UPDATE Person 
+             SET firstName = ?, lastName = ?, email = ? 
+             WHERE id = ?`,
+            [user.firstName, user.lastName, user.email, personID]
         );
 
-        if (user.role === Role.PROJECT_MANAGER || isAdmin) {
-            const [managerRows] = await conn.execute("SELECT * FROM projectmanager WHERE userID = ?", [user.userID]);
-            if (managerRows.length === 0) {
-                await conn.execute("INSERT INTO projectmanager (userID) VALUES (?)", [user.userID]);
-            }
+        // Update Account table
+        await conn.execute(
+            `UPDATE Account 
+             SET isDeactivated = ? 
+             WHERE personId = ?`,
+            [user.isDeactivated, personID]
+        );
+
+        // Update OrgUnit association
+        await conn.execute(
+            `UPDATE Person_OrgUnit 
+             SET orgUnit = ? 
+             WHERE personId = ?`,
+            [user.orgUnit, personID]
+        );
+
+        // Update user role
+        if (user.role) {
+            await conn.execute(
+                `DELETE FROM Account_UserRole WHERE accountId = ?`,
+                [user.accountID]
+            );
+            await conn.execute(
+                `INSERT INTO Account_UserRole (accountId, userRole) VALUES (?, ?)`,
+                [user.accountID, user.role]
+            );
         }
 
         await conn.commit();
-        response(null, "Users updated successfully");
+        response(null, "User updated successfully");
     } catch (error) {
         await conn.rollback();
-        console.error("Error occurred while updating users: ", error);
-        response({ message: "Error occurred while updating users" }, null);
+        console.error("Error occurred while updating user: ", error);
+        response({ message: "Error occurred while updating user" }, null);
+    } finally {
+        if (conn) {
+            conn.release();
+        }
+    }
+};
+
+
+// Function to update password
+User.updatePassword = async (accountID, passwordHash, salt, response) => {
+    let conn;
+    try {
+        conn = await connectionPool.promise().getConnection();
+        await conn.beginTransaction();
+        await conn.execute(`UPDATE Password SET hash = ?, salt = ? WHERE accountId = ?`, [passwordHash, salt, accountID]);
+        await conn.commit();
+        response(null, `Password updated successfully`);
+
+    } catch (error) {
+        await conn.rollback();
+        console.error("Error occurred while updating password: ", error);
+        response(`Error updating password for account ID ${accountID}`, null);
     } finally {
         if (conn) {
             conn.release();
@@ -210,7 +249,8 @@ User.checkIfEmailAlreadyUsed = async (email, response) => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
-        const [rows] = await conn.execute("SELECT * FROM user WHERE email = ?", [email]);
+        const [rows] = await conn.execute("SELECT * FROM Person WHERE email = ?", [email]);
+        console.log(rows.length > 0)
         response(null, { exist: rows.length > 0 });
     } catch (err) {
         response(err, null);
@@ -275,34 +315,6 @@ User.findByID = async (userID, response) => {
     }
 };
 
-// Function to update password
-User.updatePassword = async (userID, passwordHash, salt, response) => {
-    let conn;
-    try {
-        conn = await connectionPool.promise().getConnection();
-        const [res] = await conn.execute('SELECT passwordHash FROM user WHERE userID = ?', [userID]);
-
-        if (res[0].passwordHash === "") {
-            await conn.beginTransaction();
-            await conn.execute(`UPDATE user SET passwordHash = ?, salt = ? WHERE userID = ?`, [passwordHash, salt, userID]);
-            await conn.commit();
-            response(null, `User with ID ${userID} updated successfully`);
-        } else {
-            const errorMessage = "The user password has already been updated.";
-            console.error(errorMessage);
-            response(errorMessage, null);
-        }
-    } catch (error) {
-        await conn.rollback();
-        console.error("Error occurred while updating users: ", error);
-        response(`Error updating user with ID ${userID}`, null);
-    } finally {
-        if (conn) {
-            conn.release();
-        }
-    }
-};
-
 // Function to find user by email
 User.findByEmail = async (email) => {
     let conn;
@@ -339,7 +351,7 @@ User.findByEmail = async (email) => {
             isDeactivated: userData.isDeactivated,
             passwordHash: userData.passwordHash,
         };
-        console.log(user)
+
         return user;
     } catch (error) {
         console.error('Error finding user by email:', error);

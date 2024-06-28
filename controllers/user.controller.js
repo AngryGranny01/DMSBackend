@@ -58,12 +58,31 @@ exports.findOne = (req, res) => {
 exports.update = (req, res) => {
     User.updateByID(req.body, (err, data) => {
         if (err) {
-            return res.status(500).send({ message: "Error updating User with id " + req.body.userID });
+            return res.status(500).send({ message: "Error updating User with accountID " + req.body.userID });
         }
         if (data === "not_found") {
-            return res.status(404).send({ message: `User with id ${req.body.userID} not found.` });
+            return res.status(404).send({ message: `User with accountID ${req.body.userID} not found.` });
         }
-        res.send({ message: `User with id ${req.body.userID} was updated successfully!` });
+        res.send({ message: `User with accountID ${req.body.userID} was updated successfully!` });
+    });
+};
+
+// Update User Password
+exports.updateUserPassword = (req, res) => {
+    const accountID = req.body.accountID;
+    const passwordHash = req.body.passwordHash;
+    const salt = req.body.salt;
+
+    if (!accountID || !passwordHash || !salt) {
+        return res.status(400).send({ message: "Account ID, password hash, and salt are required" });
+    }
+
+    User.updatePassword(accountID, passwordHash, salt, (err, data) => {
+        if (err) {
+            return res.status(500).send({ message: "Error updating password for Account ID " + accountID });
+        }
+        console.log("Im Called")
+        res.send({ message: `User Password with accountID ${req.body.userID} was updated successfully!` });
     });
 };
 
@@ -146,10 +165,10 @@ exports.verifyToken = async (req, res) => {
 
     try {
         const decoded = jwt.verify(token, JWT_SECRET);
-        const userID = decoded.userID;
+        const accountID = decoded.userID;
 
         await new Promise((resolve, reject) => {
-            User.updatePassword(userID, passwordHash, salt, (err, data) => {
+            User.updatePassword(accountID, passwordHash, salt, (err, data) => {
                 if (err) {
                     reject(err);
                 } else {
@@ -158,7 +177,7 @@ exports.verifyToken = async (req, res) => {
             });
         });
 
-        res.send({ message: `User with id ${userID} was updated successfully!` });
+        res.send({ message: `User with id ${accountID} was updated successfully!` });
 
     } catch (error) {
         if (error.name === 'TokenExpiredError') {

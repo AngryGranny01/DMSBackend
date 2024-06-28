@@ -175,7 +175,7 @@ Log.getUsersLastLogin = async (result) => {
             date: dateRow.newestDate,
             userID: dateRow.userID
         }));
-        console.log(lastLoginDates)
+
         result(null, lastLoginDates);
     } catch (error) {
         console.error("Error occurred while fetching users' last login dates: ", error);
