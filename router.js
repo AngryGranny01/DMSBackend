@@ -85,7 +85,7 @@ router.post('/login', userController.login);
  *       500:
  *         description: Internal server error
  */
-router.post("/users", authorizedRoles(['ADMIN']), userValidationRules(), validate, authenticateToken, userController.create);
+router.post("/users",  userValidationRules(), validate, authenticateToken, authorizedRoles(['ADMIN']), userController.create);
 
 /**
  * @swagger
@@ -166,7 +166,7 @@ router.get("/users/checkEmailExist", authenticateToken, userController.checkIfEm
  *       500:
  *         description: Internal server error
  */
-router.get("/user/:userID",authorizedRoles(['ADMIN']), authenticateToken, userController.findOne);
+router.get("/user/:userID", authenticateToken, authorizedRoles(['ADMIN']), userController.findOne);
 
 
 /**
@@ -243,7 +243,7 @@ router.get("/users/findSalt", userController.findSalt);
  *       500:
  *         description: Internal server error
  */
-router.get("/users", authorizedRoles(['ADMIN']), authenticateToken, userController.getAllUsers);
+router.get("/users", authenticateToken, authorizedRoles(['ADMIN']), userController.getAllUsers);
 
 
 /**
@@ -267,7 +267,7 @@ router.get("/users", authorizedRoles(['ADMIN']), authenticateToken, userControll
  *       500:
  *         description: Internal server error
  */
-router.delete("/users/:userID", authorizedRoles(['ADMIN']), authenticateToken, userController.delete);
+router.delete("/users/:userID", authenticateToken, authorizedRoles(['ADMIN']), userController.delete);
 
 
 /**
@@ -319,7 +319,7 @@ router.delete("/users/:userID", authorizedRoles(['ADMIN']), authenticateToken, u
  *       500:
  *         description: Internal server error
  */
-router.put("/users", authorizedRoles(['ADMIN']), authenticateToken, userController.update);
+router.put("/users", authenticateToken, authorizedRoles(['ADMIN']), userController.update);
 
 
 /**
@@ -398,7 +398,7 @@ router.put("/verifyToken", userController.verifyToken);
  *       500:
  *         description: Internal server error
  */
-router.post("/projects", authorizedRoles(['ADMIN', 'PROJECT_MANAGER']), authenticateToken, projectController.create);
+router.post("/projects",  authenticateToken, authorizedRoles(['ADMIN', 'PROJECT_MANAGER']), projectController.create);
 
 
 /**
@@ -459,7 +459,7 @@ router.post("/projects", authorizedRoles(['ADMIN', 'PROJECT_MANAGER']), authenti
  *       500:
  *         description: Internal server error
  */
-router.get("/projects", authorizedRoles(['ADMIN']), authenticateToken, projectController.findAll);
+router.get("/projects",  authenticateToken, authorizedRoles(['ADMIN']), projectController.findAll);
 
 
 /**
@@ -577,7 +577,7 @@ router.get("/projects/:userID", authenticateToken, projectController.findUserPro
  *       500:
  *         description: Internal server error
  */
-router.put("/projects", authorizedRoles(['ADMIN', 'PROJECT_MANAGER']), authenticateToken, projectController.update);
+router.put("/projects", authenticateToken, authorizedRoles(['ADMIN', 'PROJECT_MANAGER']), projectController.update);
 
 
 /**
@@ -601,7 +601,7 @@ router.put("/projects", authorizedRoles(['ADMIN', 'PROJECT_MANAGER']), authentic
  *       500:
  *         description: Internal server error
  */
-router.delete("/projects", authorizedRoles(['ADMIN', 'PROJECT_MANAGER']), authenticateToken, projectController.delete);
+router.delete("/projects",  authenticateToken, authorizedRoles(['ADMIN', 'PROJECT_MANAGER']),projectController.delete);
 
 
 /**

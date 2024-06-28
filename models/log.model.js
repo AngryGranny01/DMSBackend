@@ -160,14 +160,14 @@ Log.getUsersLastLogin = async (result) => {
         // Query to find the newest login date for all users
         const selectLastLoginSql = `
         SELECT 
-            userID,
+            actorId AS userID,
             MAX(timeStampLog) AS newestDate
         FROM 
             Log
         WHERE 
-            activityName IN ('LOGIN', 'CREATE_USER')
+            action IN ('login', 'create')
         GROUP BY 
-            userID;
+            actorId;
         `;
 
         const [dateRows] = await conn.execute(selectLastLoginSql);
@@ -175,7 +175,7 @@ Log.getUsersLastLogin = async (result) => {
             date: dateRow.newestDate,
             userID: dateRow.userID
         }));
-
+        console.log(lastLoginDates)
         result(null, lastLoginDates);
     } catch (error) {
         console.error("Error occurred while fetching users' last login dates: ", error);

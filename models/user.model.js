@@ -74,31 +74,54 @@ User.getAll = async (response) => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
-        const [userRows] = await conn.execute("SELECT * FROM user");
+        console.log("Im Called")
+        // Query to get all users with their roles and deactivation status
+        const query = `
+            SELECT 
+                p.id AS userID, 
+                p.firstName, 
+                p.lastName, 
+                p.email, 
+                po.orgUnit, 
+                a.isDeactivated,
+                GROUP_CONCAT(aur.userRole) AS roles
+            FROM 
+                Person p
+            JOIN 
+                Account a ON p.id = a.personId
+            LEFT JOIN 
+                Person_OrgUnit po ON p.id = po.personId
+            LEFT JOIN 
+                Account_UserRole aur ON a.id = aur.accountId
+            GROUP BY 
+                p.id, p.firstName, p.lastName, p.email, po.orgUnit, a.isDeactivated
+        `;
 
-        const users = [];
-        for (const userRow of userRows) {
+        const [userRows] = await conn.execute(query);
+
+        const users = userRows.map(userRow => {
+            const roles = userRow.roles ? userRow.roles.split(',') : [];
             let role;
-            const [managerRows] = await conn.execute("SELECT COUNT(*) AS isProjectManager FROM projectmanager WHERE userID = ?", [userRow.userID]);
-            if (userRow.isAdmin === 1) {
+            console.log(userRow)
+            if (roles.includes(Role.ADMIN)) {
                 role = Role.ADMIN;
-            } else if (managerRows[0].isProjectManager === 1) {
+            } else if (roles.includes(Role.PROJECT_MANAGER)) {
                 role = Role.PROJECT_MANAGER;
             } else {
                 role = Role.USER;
             }
-            users.push({
+
+            return {
                 userID: userRow.userID,
-                userName: userRow.userName,
                 firstName: userRow.firstName,
                 lastName: userRow.lastName,
                 email: userRow.email,
-                salt: userRow.salt,
                 orgUnit: userRow.orgUnit,
-                passwordHash: userRow.passwordHash,
-                role: role
-            });
-        }
+                role: role,
+                isDeactivated: userRow.isDeactivated
+            };
+        });
+
         response(null, users);
     } catch (error) {
         console.error("Error retrieving data from database:", error);
@@ -109,6 +132,7 @@ User.getAll = async (response) => {
         }
     }
 };
+
 
 // Function to update a user by ID
 User.updateByID = async (user, response) => {
