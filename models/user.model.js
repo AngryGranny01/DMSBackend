@@ -197,21 +197,6 @@ User.checkIfEmailAlreadyUsed = async (email, response) => {
     }
 };
 
-// Function to check if username already exists
-User.isUsernameAlreadyUsed = async (username, response) => {
-    let conn;
-    try {
-        conn = await connectionPool.promise().getConnection();
-        const [rows] = await conn.execute("SELECT * FROM user WHERE userName = ?", [username]);
-        response(null, { exist: rows.length > 0 });
-    } catch (err) {
-        response(err, null);
-    } finally {
-        if (conn) {
-            conn.release();
-        }
-    }
-};
 
 // Function to check password
 User.checkPassword = async (email, response) => {
@@ -316,7 +301,6 @@ User.findByEmail = async (email) => {
         }
 
         const userData = rows[0];
-        console.log(userData)
 
         const roles = userData.roles ? userData.roles.split(',') : [];
         const role = roles.includes(Role.ADMIN) ? Role.ADMIN : roles.includes(Role.PROJECT_MANAGER) ? Role.PROJECT_MANAGER : Role.USER;
@@ -331,7 +315,7 @@ User.findByEmail = async (email) => {
             isDeactivated: userData.isDeactivated,
             passwordHash: userData.passwordHash,
         };
-
+        console.log(user)
         return user;
     } catch (error) {
         console.error('Error finding user by email:', error);

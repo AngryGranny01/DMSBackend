@@ -6,7 +6,7 @@ const userController = require("./controllers/user.controller");
 const logController = require("./controllers/log.controller");
 const projectManagerController = require("./controllers/projectManager.controller");
 const { userValidationRules, validate } = require('./middleware/validation');
-const authenticateToken = require('./middleware/auth');
+const { authenticateToken, authorizedRoles } = require('./middleware/auth');
 
 //---------------------------------------------- User Routes ----------------------------------------------//
 /**
@@ -85,7 +85,7 @@ router.post('/login', userController.login);
  *       500:
  *         description: Internal server error
  */
-router.post("/users", userValidationRules(), validate, authenticateToken, userController.create);
+router.post("/users", authorizedRoles(['ADMIN']), userValidationRules(), validate, authenticateToken, userController.create);
 
 /**
  * @swagger
@@ -120,39 +120,6 @@ router.post("/users", userValidationRules(), validate, authenticateToken, userCo
  */
 router.get("/users/checkEmailExist", authenticateToken, userController.checkIfEmailExist);
 
-
-/**
- * @swagger
- * /users/checkUsernameExist:
- *   get:
- *     summary: Checks if username exists
- *     tags: [User]
- *     parameters:
- *       - in: query
- *         name: username
- *         schema:
- *           type: string
- *         required: true
- *         description: Username to check
- *     responses:
- *       200:
- *         description: Username checked successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 exist:
- *                   type: boolean
- *                   description: Indicates whether the username exists
- *       400:
- *         description: Invalid input
- *       404:
- *         description: Username not found
- *       500:
- *         description: Internal server error
- */
-router.get("/users/checkUsernameExist", authenticateToken, userController.checkIfUsernameExist);
 
 
 /**
@@ -199,7 +166,7 @@ router.get("/users/checkUsernameExist", authenticateToken, userController.checkI
  *       500:
  *         description: Internal server error
  */
-router.get("/user/:userID", authenticateToken, userController.findOne);
+router.get("/user/:userID",authorizedRoles(['ADMIN']), authenticateToken, userController.findOne);
 
 
 /**
@@ -276,7 +243,7 @@ router.get("/users/findSalt", userController.findSalt);
  *       500:
  *         description: Internal server error
  */
-router.get("/users", authenticateToken, userController.getAllUsers);
+router.get("/users", authorizedRoles(['ADMIN']), authenticateToken, userController.getAllUsers);
 
 
 /**
@@ -300,7 +267,7 @@ router.get("/users", authenticateToken, userController.getAllUsers);
  *       500:
  *         description: Internal server error
  */
-router.delete("/users/:userID", authenticateToken, userController.delete);
+router.delete("/users/:userID", authorizedRoles(['ADMIN']), authenticateToken, userController.delete);
 
 
 /**
@@ -352,7 +319,7 @@ router.delete("/users/:userID", authenticateToken, userController.delete);
  *       500:
  *         description: Internal server error
  */
-router.put("/users", authenticateToken, userController.update);
+router.put("/users", authorizedRoles(['ADMIN']), authenticateToken, userController.update);
 
 
 /**
@@ -431,7 +398,7 @@ router.put("/verifyToken", userController.verifyToken);
  *       500:
  *         description: Internal server error
  */
-router.post("/projects", authenticateToken, projectController.create);
+router.post("/projects", authorizedRoles(['ADMIN', 'PROJECT_MANAGER']), authenticateToken, projectController.create);
 
 
 /**
@@ -492,7 +459,7 @@ router.post("/projects", authenticateToken, projectController.create);
  *       500:
  *         description: Internal server error
  */
-router.get("/projects", authenticateToken, projectController.findAll);
+router.get("/projects", authorizedRoles(['ADMIN']), authenticateToken, projectController.findAll);
 
 
 /**
@@ -610,7 +577,7 @@ router.get("/projects/:userID", authenticateToken, projectController.findUserPro
  *       500:
  *         description: Internal server error
  */
-router.put("/projects", authenticateToken, projectController.update);
+router.put("/projects", authorizedRoles(['ADMIN', 'PROJECT_MANAGER']), authenticateToken, projectController.update);
 
 
 /**
@@ -634,7 +601,7 @@ router.put("/projects", authenticateToken, projectController.update);
  *       500:
  *         description: Internal server error
  */
-router.delete("/projects", authenticateToken, projectController.delete);
+router.delete("/projects", authorizedRoles(['ADMIN', 'PROJECT_MANAGER']), authenticateToken, projectController.delete);
 
 
 /**

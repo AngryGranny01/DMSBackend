@@ -94,19 +94,6 @@ exports.checkIfEmailExist = (req, res) => {
     });
 };
 
-// Check if username already exists
-exports.checkIfUsernameExist = (req, res) => {
-    if (!req.query.username) {
-        return res.status(400).send({ message: "Username is required" });
-    }
-
-    User.isUsernameAlreadyUsed(req.query.username, (err, data) => {
-        if (err) {
-            return res.status(500).send({ message: "Some error occurred while checking if the User exists." });
-        }
-        res.send(data);
-    });
-};
 
 // Check login credentials
 exports.login = (req, res) => {
@@ -129,12 +116,12 @@ exports.login = (req, res) => {
                 lastName: user.lastName,
                 email: user.email,
                 orgUnit: user.orgUnit,
-                role: user.userRole,
+                role: user.role,
                 isDeactivated: user.isDeactivated
             };
             const tokenData = {
                 userID: user.userID,
-                role: user.userRole
+                role: user.role
             }
             // Generate JWT token
             const token = jwt.sign(tokenData, JWT_SECRET, { expiresIn: '1h' });

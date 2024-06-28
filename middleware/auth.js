@@ -13,4 +13,14 @@ function authenticateToken(req, res, next) {
     });
 }
 
-module.exports = authenticateToken;
+function authorizedRoles(allowedRoles) {
+    return (req, res, next) => {
+        if (!allowedRoles.includes(req.user.role)) {
+            return res.sendStatus(403); // 403 Forbidden if user lacks the required role
+        }
+        next();
+    };
+}
+
+
+module.exports = { authenticateToken, authorizedRoles };
