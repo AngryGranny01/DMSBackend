@@ -21,43 +21,55 @@ User.create = async (userData) => {
         let isAdmin = userData.role === Role.ADMIN;
         let isProjectManager = userData.role === Role.PROJECT_MANAGER || isAdmin;
 
-        const user = {
-            userName: userData.userName,
-            firstName: userData.firstName,
-            lastName: userData.lastName,
-            email: userData.email,
-            orgUnit: userData.orgUnit,
-            isAdmin: isAdmin,
-        };
+        // Insert into Person table
+        const insertPersonSql = `
+            INSERT INTO Person (firstName, lastName, email) 
+            VALUES (?, ?, ?)`;
+        const [rowsPerson] = await conn.execute(insertPersonSql, [
+            userData.firstName,
+            userData.lastName,
+            userData.email
+        ]);
 
-        const insertUserSql = `
-            INSERT INTO user 
-            (userName, firstName, lastName, email, orgUnit, isAdmin, passwordHash, salt) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
-        const [rowsUser] = await conn.execute(insertUserSql, [
-            user.userName,
-            user.firstName,
-            user.lastName,
-            user.email,
-            user.orgUnit,
-            user.isAdmin,
-            user.passwordHash,
-            user.salt
+        const personID = rowsPerson.insertId;
+
+        // Insert into Account table
+        const insertAccountSql = `
+            INSERT INTO Account (personId, isDeactivated) 
+            VALUES (?, ?)`;
+        const [rowsAccount] = await conn.execute(insertAccountSql, [
+            personID,
+            false
+        ]);
+
+        const accountID = rowsAccount.insertId;
+
+        // Insert into Person_OrgUnit table
+        const insertOrgUnitSql = `
+            INSERT INTO Person_OrgUnit (personId, orgUnit) 
+            VALUES (?, ?)`;
+        await conn.execute(insertOrgUnitSql, [
+            personID,
+            userData.orgUnit
+        ]);
+
+        // Insert into Account_UserRole table
+        const insertUserRoleSql = `
+            INSERT INTO Account_UserRole (accountId, userRole) 
+            VALUES (?, ?)`;
+        await conn.execute(insertUserRoleSql, [
+            accountID,
+            userData.role
         ]);
 
         // Generate token for email verification
-        const token = generateToken(rowsUser.insertId);
+        const token = generateToken(accountID);
 
         // Send email with one-time link
         await sendOneTimeLink(userData.email, token);
 
-        // Insert the user as a project manager if applicable
-        if (isProjectManager) {
-            await conn.execute('INSERT INTO ProjectManager (userID) VALUES (?)', [rowsUser.insertId]);
-        }
-
         await conn.commit();
-        return rowsUser.insertId;
+        return accountID;
     } catch (error) {
         await conn.rollback();
         console.error("Error occurred while inserting a new User: ", error);
@@ -120,7 +132,6 @@ User.getAll = async (response) => {
                 isDeactivated: userRow.isDeactivated
             };
         });
-
         response(null, users);
     } catch (error) {
         console.error("Error retrieving data from database:", error);
