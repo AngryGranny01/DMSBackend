@@ -4,14 +4,12 @@ const { sendOneTimeLink, generateToken } = require("../service/emailService");
 
 const User = function (user, role) {
     this.userID = user.userID;
-    this.userName = user.userName;
     this.firstName = user.firstName;
     this.lastName = user.lastName;
     this.email = user.email;
-    this.passwordHash = user.passwordHash;
-    this.salt = user.salt;
     this.orgUnit = user.orgUnit;
     this.role = role;
+    this.isDeactivated = user.isDeactivated;
 };
 
 User.create = async (userData) => {
@@ -30,8 +28,6 @@ User.create = async (userData) => {
             email: userData.email,
             orgUnit: userData.orgUnit,
             isAdmin: isAdmin,
-            passwordHash: "",
-            salt: ""
         };
 
         const insertUserSql = `
@@ -303,12 +299,40 @@ User.findByEmail = async (email) => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
-        const query = 'SELECT * FROM user WHERE email = ?';
+        const query = `
+            SELECT p.firstName, p.lastName, p.email, a.id as accountId, a.isDeactivated, 
+                po.orgUnit, GROUP_CONCAT(aur.userRole) as roles, pw.hash as passwordHash
+            FROM Person p
+            JOIN Account a ON p.id = a.personId
+            LEFT JOIN Person_OrgUnit po ON p.id = po.personId
+            LEFT JOIN Account_UserRole aur ON a.id = aur.accountId
+            LEFT JOIN Password pw ON a.id = pw.accountId
+            WHERE p.email = ?
+            GROUP BY p.firstName, p.lastName, p.email, a.id, a.isDeactivated, po.orgUnit, pw.hash`;
         const [rows] = await conn.execute(query, [email]);
+
         if (rows.length === 0) {
             return null;
         }
-        return rows[0];
+
+        const userData = rows[0];
+        console.log(userData)
+
+        const roles = userData.roles ? userData.roles.split(',') : [];
+        const role = roles.includes(Role.ADMIN) ? Role.ADMIN : roles.includes(Role.PROJECT_MANAGER) ? Role.PROJECT_MANAGER : Role.USER;
+
+        const user = {
+            userID: userData.accountId,
+            firstName: userData.firstName,
+            lastName: userData.lastName,
+            email: userData.email,
+            orgUnit: userData.orgUnit,
+            role: role,
+            isDeactivated: userData.isDeactivated,
+            passwordHash: userData.passwordHash,
+        };
+
+        return user;
     } catch (error) {
         console.error('Error finding user by email:', error);
         throw error;
@@ -339,20 +363,29 @@ User.isProjectManager = async (userID) => {
 User.findSaltByEmail = async (email) => {
     let conn;
     try {
-      conn = await connectionPool.promise().getConnection();
-      const [rows] = await conn.execute('SELECT salt FROM User WHERE email = ?', [email]);
-      if (rows.length === 0) {
-        throw new Error('No user found with this email');
-      }
-      return rows[0].salt;
+        conn = await connectionPool.promise().getConnection();
+        const query = `
+            SELECT pw.salt
+            FROM Person p
+            JOIN Account a ON p.id = a.personId
+            JOIN Password pw ON a.id = pw.accountId
+            WHERE p.email = ?`;
+        const [rows] = await conn.execute(query, [email]);
+
+        if (rows.length === 0) {
+            throw new Error('No user found with this email');
+        }
+
+        return rows[0].salt;
     } catch (error) {
-      console.error('Error fetching salt:', error);
-      throw error;
+        console.error('Error fetching salt:', error);
+        throw error;
     } finally {
-      if (conn) {
-        conn.release();
-      }
+        if (conn) {
+            conn.release();
+        }
     }
 };
+
 
 module.exports = { User };

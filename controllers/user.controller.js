@@ -37,7 +37,7 @@ exports.findSalt = async (req, res) => {
         const salt = await User.findSaltByEmail(email);
         res.send(salt);
     } catch (error) {
-        res.status(500).send({ message: error.message || 'An error occurred while retrieving the salt.' });
+        res.status(500).send({ message: 'An error occurred while retrieving the salt.' });
     }
 };
 
@@ -111,6 +111,7 @@ exports.checkIfUsernameExist = (req, res) => {
 // Check login credentials
 exports.login = (req, res) => {
     const { email, hashedPassword } = req.body;
+    console.log(email)
 
     User.findByEmail(email)
         .then(user => {
@@ -122,34 +123,23 @@ exports.login = (req, res) => {
                 return res.status(401).send({ message: 'Invalid User Data' });
             }
 
-            User.isProjectManager(user.userID)
-                .then(isProjectManager => {
-                    const userRole = user.isAdmin ? Role.ADMIN : isProjectManager ? Role.PROJECT_MANAGER : Role.USER;
+            const userData = {
+                userID: user.userID,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                email: user.email,
+                orgUnit: user.orgUnit,
+                role: user.userRole,
+                isDeactivated: user.isDeactivated
+            };
+            const tokenData = {
+                userID: user.userID,
+                role: user.userRole
+            }
+            // Generate JWT token
+            const token = jwt.sign(tokenData, JWT_SECRET, { expiresIn: '1h' });
+            res.send({ user: userData, token: token });
 
-                    const userData = {
-                        userID: user.userID,
-                        userName: user.userName,
-                        firstName: user.firstName,
-                        lastName: user.lastName,
-                        email: user.email,
-                        salt: user.salt,
-                        orgUnit: user.orgUnit,
-                        role: userRole
-                    };
-                    const tokenData = {
-                        userID: user.userID,
-                        userName: user.userName,
-                        email: user.email,
-                        role: userRole
-                    }
-                    // Generate JWT token
-                    const token = jwt.sign(tokenData, JWT_SECRET, { expiresIn: '1h' });
-                    res.send({ user: userData, token: token });
-                })
-                .catch(error => {
-                    console.error('Error checking project manager status:', error);
-                    res.status(500).json({ message: 'Internal server error' });
-                });
         })
         .catch(error => {
             console.error('Error finding user by email:', error);
