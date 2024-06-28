@@ -3,7 +3,9 @@ const { body, validationResult } = require('express-validator');
 const userValidationRules = () => {
     return [
         body('email').isEmail().withMessage('Invalid email format'),
-        body('userName').notEmpty().withMessage('Username must not be empty'),
+        body('firstName').notEmpty().withMessage('First Name must not be empty'),
+        body('lastName').notEmpty().withMessage('Last Name must not be empty'),
+        body('orgUnit').notEmpty().withMessage('Organizational Unit must not be empty'),
     ];
 }
 

@@ -39,7 +39,7 @@ User.create = async (userData) => {
             VALUES (?, ?)`;
         const [rowsAccount] = await conn.execute(insertAccountSql, [
             personID,
-            false
+            true
         ]);
 
         const accountID = rowsAccount.insertId;
@@ -208,27 +208,83 @@ User.updateByID = async (user, response) => {
     }
 };
 
-
-// Function to update password
-User.updatePassword = async (accountID, passwordHash, salt, response) => {
+User.createPassword = async (accountID, passwordHash, salt, response) => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
         await conn.beginTransaction();
-        await conn.execute(`UPDATE Password SET hash = ?, salt = ? WHERE accountId = ?`, [passwordHash, salt, accountID]);
+
+        // Insert the password hash and salt into the Password table
+        await conn.execute(
+            `INSERT INTO Password (accountId, hash, salt) VALUES (?, ?, ?)`,
+            [accountID, passwordHash, salt]
+        );
+
+        // Set isDeactivated to false in the Account table
+        await conn.execute(
+            `UPDATE Account SET isDeactivated = false WHERE id = ?`,
+            [accountID]
+        );
+
         await conn.commit();
-        response(null, `Password updated successfully`);
+        response(null, `Password created successfully and account activated`);
 
     } catch (error) {
         await conn.rollback();
-        console.error("Error occurred while updating password: ", error);
-        response(`Error updating password for account ID ${accountID}`, null);
+        console.error("Error occurred while creating password and updating account status: ", error);
+        response(`Error creating password and updating account status for account ID ${accountID}`, null);
     } finally {
         if (conn) {
             conn.release();
         }
     }
 };
+
+User.hasPassword = async (accountID, response) => {
+    let conn;
+    try {
+        conn = await connectionPool.promise().getConnection();
+        const [rows] = await conn.execute('SELECT hash FROM Password WHERE accountId = ?', [accountID]);
+        if (rows.length > 0) {
+            response(null, true);
+        } else {
+            response(null, false); // No password found
+        }
+    } catch (error) {
+        console.error('Error occurred while retrieving password:', error);
+        response(error, null);
+    } finally {
+        if (conn) {
+            conn.release();
+        }
+    }
+};
+
+
+// Function to update password 
+User.updatePassword = async (accountID, passwordHash, salt, response) => {
+    let conn;
+    try {
+        conn = await connectionPool.promise().getConnection();
+        await conn.beginTransaction();
+
+        // Update the password
+        await conn.execute(`UPDATE Password SET hash = ?, salt = ? WHERE accountId = ?`, [passwordHash, salt, accountID]);
+
+        await conn.commit();
+        response(null, `Password and account status updated successfully`);
+
+    } catch (error) {
+        await conn.rollback();
+        console.error("Error occurred while updating password and account status: ", error);
+        response(`Error updating password and account status for account ID ${accountID}`, null);
+    } finally {
+        if (conn) {
+            conn.release();
+        }
+    }
+};
+
 
 // Function to delete a user by ID
 User.remove = async (userID, response) => {

@@ -149,7 +149,7 @@ exports.login = (req, res) => {
         })
         .catch(error => {
             console.error('Error finding user by email:', error);
-            res.status(500).json({ message: 'Internal server error' });
+            res.status(500).json({ message: 'Invalid User Data' });
         });
 };
 
@@ -167,8 +167,23 @@ exports.verifyToken = async (req, res) => {
         const decoded = jwt.verify(token, JWT_SECRET);
         const accountID = decoded.userID;
 
+        // Check if the user already has a password
+        const existingPassword = await new Promise((resolve, reject) => {
+            User.hasPassword(accountID, (err, data) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(data);
+                }
+            });
+        });
+
+        if (existingPassword) {
+            return res.status(401).send({message: 'Token has expired.'});
+        }
+
         await new Promise((resolve, reject) => {
-            User.updatePassword(accountID, passwordHash, salt, (err, data) => {
+            User.createPassword(accountID, passwordHash, salt, (err, data) => {
                 if (err) {
                     reject(err);
                 } else {
@@ -181,7 +196,7 @@ exports.verifyToken = async (req, res) => {
 
     } catch (error) {
         if (error.name === 'TokenExpiredError') {
-            return res.status(401).send('Token has expired. Please contact admin.');
+            return res.status(401).send({message: 'Token has expired.'});
         }
         res.status(400).send('Invalid token');
     }
