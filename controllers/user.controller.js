@@ -81,7 +81,7 @@ exports.updateUserPassword = (req, res) => {
         if (err) {
             return res.status(500).send({ message: "Error updating password for Account ID " + accountID });
         }
-        console.log("Im Called")
+
         res.send({ message: `User Password with accountID ${req.body.userID} was updated successfully!` });
     });
 };
@@ -117,7 +117,6 @@ exports.checkIfEmailExist = (req, res) => {
 // Check login credentials
 exports.login = (req, res) => {
     const { email, hashedPassword } = req.body;
-    console.log(email)
 
     User.findByEmail(email)
         .then(user => {

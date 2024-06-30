@@ -3,33 +3,29 @@ const { Project } = require("../models/project.model");
 // Create a new project
 exports.create = async (req, res) => {
   if (!req.body) {
-    // If request body is empty, return 400 Bad Request
-    return res.status(400).send({
-      message: "Content can not be empty!"
-    });
+      return res.status(400).send({
+          message: "Content can not be empty!"
+      });
   }
 
   const data = req.body;
-  // Extract project data from request body
-  let endDate = new Date(data.projectEndDate);
   const projectData = {
-    projectName: data.projectName,
-    projectDescription: data.projectDescription,
-    projectEndDate: endDate,
-    managerID: data.managerID,
+      projectName: data.projectName,
+      projectDescription: data.projectDescription,
+      projectEndDate: data.projectEndDate ? new Date(data.projectEndDate) : null,
+      managerID: data.managerID,
   };
 
-  // Convert userIDs to a simple array of numbers
   const userIDs = data.userIDs.map(user => user.userID);
+
   try {
-    const projectID = await Project.create(projectData, userIDs);
-    res.status(201).send({ projectID });
+      const projectID = await Project.create(projectData, userIDs);
+      res.status(201).send({ projectID });
   } catch (error) {
-    console.error('Error creating project:', error);
-    res.status(500).send({ message: 'Internal server error' });
+      console.error('Error creating project:', error);
+      res.status(500).send({ message: 'Internal server error' });
   }
 };
-
 
 // Retrieve all Projects from the database
 exports.findAll = async (req, res) => {
@@ -75,33 +71,33 @@ exports.findUserProjects = async (req, res) => {
  */
 exports.update = async (req, res) => {
   if (!req.body) {
-      return res.status(400).send({
-          message: "Content can not be empty!"
-      });
+    return res.status(400).send({
+      message: "Content can not be empty!"
+    });
   }
 
   const data = req.body;
   // Convert userIDs to a simple array of numbers
   const userIDs = data.userIDs.map(user => user.userID);
   const projectData = {
-      projectID: data.projectID,
-      projectName: data.projectName,
-      projectDescription: data.projectDescription,
-      projectEndDate: data.projectEndDate,
-      managerID: data.managerID,
-      userIDs: userIDs
+    projectID: data.projectID,
+    projectName: data.projectName,
+    projectDescription: data.projectDescription,
+    projectEndDate: data.projectEndDate,
+    managerID: data.managerID,
+    userIDs: userIDs
   };
 
   try {
-      const result = await Project.updateByID(projectData);
-      if (result) {
-          res.send({ message: `Project with ID ${projectData.projectID} was updated successfully!` });
-      } else {
-          res.status(404).send({ message: `Project not found with ID ${projectData.projectID}` });
-      }
+    const result = await Project.updateByID(projectData);
+    if (result) {
+      res.send({ message: `Project with ID ${projectData.projectID} was updated successfully!` });
+    } else {
+      res.status(404).send({ message: `Project not found with ID ${projectData.projectID}` });
+    }
   } catch (error) {
-      console.error('Error updating project:', error);
-      res.status(500).send({ message: 'Internal server error' });
+    console.error('Error updating project:', error);
+    res.status(500).send({ message: 'Internal server error' });
   }
 };
 

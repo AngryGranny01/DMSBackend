@@ -15,7 +15,9 @@ VALUES
 -- deactivated if flag set in account
 INSERT INTO UserRole (name)
 VALUES
-    ('admin');
+    ('ADMIN'),
+    ('PROJECT MANAGER'),
+    ('USER');
 
 INSERT INTO action (name)
 VALUES
@@ -43,7 +45,7 @@ VALUES
 
 INSERT INTO Person (firstName, lastName, email)
 VALUES
-    ('Peter', 'Schartner', 'peter.schartner@aau.at'),
+    ('Robert-Johann', 'Dienst', 'rodienst@edu.aau.at'),
     ('Aron', 'Sacherer', 'aronsa@edu.aau.at'),
     ('John', 'Doe', 'john@example.com'),
     ('Max', 'Mustermann', 'max@example.com'),
@@ -90,9 +92,20 @@ VALUES
 
 INSERT INTO Account_UserRole (accountId, userRole)
 VALUES
-    (1, 'admin');
+    (1, 'ADMIN'),
+    (2, 'ADMIN'),
+	(3, 'PROJECT MANAGER'),
+	(4, 'USER'),
+	(5, 'USER'),
+    (6, 'PROJECT MANAGER'),
+	(7, 'USER'),
+	(8, 'USER'),
+    (9, 'PROJECT MANAGER'),
+	(10, 'USER'),
+	(11, 'USER'),
+    (12, 'USER');
 
-UPDATE Account SET isDeactivated = true WHERE id IN(9, 10);
+UPDATE Account SET isDeactivated = true WHERE id IN(3,4,5,6,7,8,9,10,11,12);
 
 INSERT INTO Password (accountId, hash, salt)
 VALUES
@@ -143,5 +156,3 @@ VALUES
     ( 1, 'create', 'account', 12, NULL, NULL),
     ( 1, 'create', 'account', 13, NULL, NULL),
     ( 1, 'create', 'account', 14, NULL, NULL);
-
-    

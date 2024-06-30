@@ -8,39 +8,46 @@ const Project = function (project, dateTime) {
     this.dateTime = dateTime;
 };
 
+// Create a new project
 Project.create = async (newProject, userIDs) => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
+        await conn.beginTransaction();
 
         const insertProjectSql = `
-            INSERT INTO project 
-            (projectName, projectDescription, projectEndDate, managerID) 
-            VALUES ( ?, ?, ?, ?)`;
+            INSERT INTO Project 
+            (name, description, endOfProjectDate, managerId) 
+            VALUES (?, ?, ?, ?)`;
 
         const projectData = [
             newProject.projectName,
             newProject.projectDescription,
-            new Date(newProject.projectEndDate),
+            newProject.projectEndDate ? new Date(newProject.projectEndDate) : null,
             newProject.managerID
         ];
 
-        const [newProjectRow] = await conn.execute(insertProjectSql, projectData);
+        const [result] = await conn.execute(insertProjectSql, projectData);
+        const newProjectId = result.insertId;
 
-        if (newProjectRow.length === 0) {
+        if (!newProjectId) {
             throw new Error('Project creation failed, projectID not found.');
         }
 
-
         if (userIDs && userIDs.length > 0) {
-            const insertProjectUserSql = "INSERT INTO Project_User (userID, projectID) VALUES (?, ?)";
-            for (const user of userIDs) {
-                await conn.execute(insertProjectUserSql, [user, newProjectRow.insertId]);
+            const insertProjectUserSql = "INSERT INTO Account_Project (accountId, projectId) VALUES (?, ?)";
+            for (const userID of userIDs) {
+                await conn.execute(insertProjectUserSql, [userID, newProjectId]);
             }
         }
-        return newProjectRow.insertId;
+
+        await conn.commit();
+        return newProjectId;
     } catch (error) {
         console.error('Error creating project:', error);
+        if (conn) {
+            await conn.rollback();
+        }
         throw error;
     } finally {
         if (conn) {
@@ -54,7 +61,7 @@ Project.getAll = async () => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
-        
+
         const projects = [];
         const [projectRows] = await conn.execute('SELECT * FROM Project');
         if (projectRows.length > 0) {
@@ -95,39 +102,39 @@ Project.getAll = async () => {
 };
 
 
+// Function to find projects by user ID
 Project.findByUserID = async (userID) => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
 
         const query = `
-        SELECT p.*
+        SELECT DISTINCT p.*
         FROM Project p
-        INNER JOIN Project_User pu ON p.projectID = pu.projectID
-        WHERE pu.userID = ?`;
+        LEFT JOIN Account_Project ap ON p.id = ap.projectId
+        WHERE ap.accountId = ? OR p.managerId = ?`;
 
-        const [projectRows] = await conn.execute(query, [userID]);
+        const [projectRows] = await conn.execute(query, [userID, userID]);
         const projects = [];
-
         if (projectRows.length > 0) {
             for (const projectRow of projectRows) {
                 const managerQuery = `
-                SELECT u.userID, u.userName, u.firstName, u.lastName, u.orgUnit
-                FROM ProjectManager AS pm
-                JOIN User AS u ON pm.userID = u.userID
-                WHERE pm.managerID = ?`;
+                SELECT p.id as accountID, p.firstName, p.lastName, p.email, ou.orgUnit 
+                FROM Account a
+                JOIN Person p ON a.personId = p.id
+                JOIN Person_OrgUnit ou ON p.id = ou.personId
+                WHERE a.id = ?`;
 
-                const [projectManager] = await conn.execute(managerQuery, [projectRow.managerID]);
-                const [projectUserRows] = await conn.execute('SELECT userID FROM Project_User WHERE projectID = ?', [projectRow.projectID]);
+                const [projectManager] = await conn.execute(managerQuery, [projectRow.managerId]);
+                const [projectUserRows] = await conn.execute('SELECT accountId FROM Account_Project WHERE projectId = ?', [projectRow.id]);
                 const users = await Project.getProjectUsers(projectUserRows);
 
                 const project = {
-                    projectID: projectRow.projectID,
-                    projectName: projectRow.projectName,
-                    projectDescription: projectRow.projectDescription,
-                    projectEndDate: projectRow.projectEndDate,
-                    managerID: projectRow.managerID,
-                    manager: projectManager,
+                    projectID: projectRow.id,
+                    projectName: projectRow.name,
+                    projectDescription: projectRow.description,
+                    projectEndDate: projectRow.endOfProjectDate,
+                    manager: projectManager[0],
                     users: users,
                 };
                 projects.push(project);
@@ -146,24 +153,6 @@ Project.findByUserID = async (userID) => {
     }
 };
 
-Project.deriveProjectID = async () => {
-    let conn;
-    try {
-        conn = await connectionPool.promise().getConnection();
-        const year = new Date().getFullYear();
-        const query = `SELECT COUNT(*) as count FROM Project WHERE projectID LIKE ?`;
-        const [rows] = await conn.execute(query, [`${year}-%`]);
-        const sequenceNumber = String(rows[0].count + 1).padStart(3, '0');
-        return `${year}-${sequenceNumber}`;
-    } catch (error) {
-        console.error('Error generating project ID:', error);
-        throw error;
-    } finally {
-        if (conn) {
-            conn.release();
-        }
-    }
-};
 
 /**
  * Update a project by its ID.
@@ -175,8 +164,6 @@ Project.updateByID = async (projectData) => {
     try {
         conn = await connectionPool.promise().getConnection();
         await conn.beginTransaction();
-
-        console.log(projectData);
 
         await conn.execute(
             'UPDATE Project SET name = ?, description = ?, endOfProjectDate = ?, managerId = ? WHERE id = ?',
@@ -241,7 +228,6 @@ Project.getProjectUsers = async (projectUserRows) => {
     try {
         conn = await connectionPool.promise().getConnection();
         const users = [];
-        console.log(projectUserRows)
 
         const userDetailsQuery = `
             SELECT a.id as accountID, p.firstName, p.lastName, p.email, ou.orgUnit, ur.userRole as role, a.isDeactivated
