@@ -31,15 +31,6 @@ Project.create = async (newProject, userIDs) => {
             throw new Error('Project creation failed, projectID not found.');
         }
 
-        const [managerRow] = await conn.execute('SELECT userID FROM ProjectManager WHERE managerID = ?', [newProject.managerID]);
-        if (managerRow.length === 0) {
-            throw new Error('Project manager not found.');
-        }
-        const managerUserID = managerRow[0].userID;
-
-        if (!userIDs.includes(managerUserID)) {
-            userIDs.push(managerUserID);
-        }
 
         if (userIDs && userIDs.length > 0) {
             const insertProjectUserSql = "INSERT INTO Project_User (userID, projectID) VALUES (?, ?)";
@@ -47,7 +38,7 @@ Project.create = async (newProject, userIDs) => {
                 await conn.execute(insertProjectUserSql, [user, newProjectRow.insertId]);
             }
         }
-       return newProjectRow.insertId;
+        return newProjectRow.insertId;
     } catch (error) {
         console.error('Error creating project:', error);
         throw error;
@@ -58,31 +49,33 @@ Project.create = async (newProject, userIDs) => {
     }
 };
 
+// Function to retrieve all projects
 Project.getAll = async () => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
+        
         const projects = [];
         const [projectRows] = await conn.execute('SELECT * FROM Project');
         if (projectRows.length > 0) {
             for (const projectRow of projectRows) {
                 const managerQuery = `
-                SELECT u.userID, u.userName, u.firstName, u.lastName, u.orgUnit
-                FROM ProjectManager AS pm
-                JOIN User AS u ON pm.userID = u.userID
-                WHERE pm.managerID = ?`;
+                SELECT p.id as accountID, p.firstName, p.lastName, p.email, ou.orgUnit 
+                FROM Account a
+                JOIN Person p ON a.personId = p.id
+                JOIN Person_OrgUnit ou ON p.id = ou.personId
+                WHERE a.id = ?`;
 
-                const [projectManager] = await conn.execute(managerQuery, [projectRow.managerID]);
-                const [projectUserRows] = await conn.execute('SELECT userID FROM Project_User WHERE projectID = ?', [projectRow.projectID]);
+                const [projectManager] = await conn.execute(managerQuery, [projectRow.managerId]);
+                const [projectUserRows] = await conn.execute('SELECT accountId FROM Account_Project WHERE projectId = ?', [projectRow.id]);
                 const users = await Project.getProjectUsers(projectUserRows);
 
                 const project = {
-                    projectID: projectRow.projectID,
-                    projectName: projectRow.projectName,
-                    projectDescription: projectRow.projectDescription,
-                    projectEndDate: projectRow.projectEndDate,
-                    managerID: projectRow.managerID,
-                    manager: projectManager,
+                    projectID: projectRow.id,
+                    projectName: projectRow.name,
+                    projectDescription: projectRow.description,
+                    projectEndDate: projectRow.endOfProjectDate,
+                    manager: projectManager[0],
                     users: users,
                 };
                 projects.push(project);
@@ -100,6 +93,7 @@ Project.getAll = async () => {
         }
     }
 };
+
 
 Project.findByUserID = async (userID) => {
     let conn;
@@ -171,20 +165,35 @@ Project.deriveProjectID = async () => {
     }
 };
 
+/**
+ * Update a project by its ID.
+ * @param {Object} projectData - The project data to update.
+ * @returns {Promise<boolean>} - Returns true if the update was successful.
+ */
 Project.updateByID = async (projectData) => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
         await conn.beginTransaction();
 
-        await conn.execute('UPDATE Project SET projectName = ?, projectDescription = ?, projectEndDate = ?, managerID = ? WHERE projectID = ?',
-            [projectData.projectName, projectData.projectDescription, new Date(projectData.projectEndDate), projectData.managerID, projectData.projectID]);
+        console.log(projectData);
 
-        await conn.execute("DELETE FROM Project_User WHERE projectID = ?", [projectData.projectID]);
+        await conn.execute(
+            'UPDATE Project SET name = ?, description = ?, endOfProjectDate = ?, managerId = ? WHERE id = ?',
+            [
+                projectData.projectName,
+                projectData.projectDescription,
+                projectData.projectEndDate ? new Date(projectData.projectEndDate) : null,
+                projectData.managerID,
+                projectData.projectID
+            ]
+        );
+
+        await conn.execute("DELETE FROM Account_Project WHERE projectId = ?", [projectData.projectID]);
 
         if (projectData.userIDs && projectData.userIDs.length > 0) {
             for (const userID of projectData.userIDs) {
-                await conn.execute("INSERT INTO Project_User (userID, projectID) VALUES (?, ?)", [userID, projectData.projectID]);
+                await conn.execute("INSERT INTO Account_Project (accountId, projectId) VALUES (?, ?)", [userID, projectData.projectID]);
             }
         }
 
@@ -200,6 +209,8 @@ Project.updateByID = async (projectData) => {
         }
     }
 };
+
+
 
 Project.remove = async (projectID) => {
     let conn;
@@ -224,42 +235,35 @@ Project.remove = async (projectID) => {
     }
 };
 
-// Helper Method to retrieve users for a project
+// Helper Function to retrieve  all users associated with a project
 Project.getProjectUsers = async (projectUserRows) => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
         const users = [];
+        console.log(projectUserRows)
+
+        const userDetailsQuery = `
+            SELECT a.id as accountID, p.firstName, p.lastName, p.email, ou.orgUnit, ur.userRole as role, a.isDeactivated
+            FROM Account a
+            JOIN Person p ON a.personId = p.id
+            JOIN Person_OrgUnit ou ON p.id = ou.personId
+            JOIN Account_UserRole ur ON a.id = ur.accountId
+            WHERE a.id = ?`;
 
         for (const userRow of projectUserRows) {
-            const [userRows] = await conn.execute('SELECT * FROM user WHERE userID = ?', [userRow.userID]);
-            if (userRows.length > 0) {
-                let userData = userRows[0];
-                let role;
-                let [managerRows] = await conn.execute("SELECT COUNT(*) AS isProjectManager FROM projectmanager WHERE userID = ?", [userData.userID]);
-                if (userData.isAdmin === 1) {
-                    role = Role.ADMIN;
-                } else if (managerRows[0].isProjectManager === 1) {
-                    role = Role.PROJECT_MANAGER;
-                } else {
-                    role = Role.USER;
-                }
-                const user = {
-                    userID: userData.userID,
-                    username: userData.userName,
-                    firstname: userData.firstName,
-                    lastname: userData.lastName,
-                    email: userData.email,
-                    role: role,
-                    orgUnit: userData.orgUnit
-                };
-                users.push(user);
+
+            const [userDetails] = await conn.execute(userDetailsQuery, [userRow.accountId]);
+
+            if (userDetails.length > 0) {
+                users.push(userDetails[0]);
             }
+
         }
         return users;
     } catch (error) {
-        console.error("Error retrieving users from database:", error);
-        throw { message: "Error retrieving users from database" };
+        console.error("Error retrieving project users:", error);
+        throw error;
     } finally {
         if (conn) {
             conn.release();

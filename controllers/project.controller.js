@@ -68,36 +68,40 @@ exports.findUserProjects = async (req, res) => {
   }
 };
 
-// Update a Project identified by the id in the request
+/**
+ * Update a Project identified by the id in the request.
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ */
 exports.update = async (req, res) => {
   if (!req.body) {
-    return res.status(400).send({
-      message: "Content can not be empty!"
-    });
+      return res.status(400).send({
+          message: "Content can not be empty!"
+      });
   }
 
-  const data = req.body
+  const data = req.body;
   // Convert userIDs to a simple array of numbers
   const userIDs = data.userIDs.map(user => user.userID);
   const projectData = {
-    projectID: data.projectID,
-    projectName: data.projectName,
-    projectDescription: data.projectDescription,
-    projectEndDate: data.projectEndDate,
-    managerID: data.managerID,
-    userIDs: userIDs
+      projectID: data.projectID,
+      projectName: data.projectName,
+      projectDescription: data.projectDescription,
+      projectEndDate: data.projectEndDate,
+      managerID: data.managerID,
+      userIDs: userIDs
   };
 
   try {
-    const result = await Project.updateByID(projectData);
-    if (result) {
-      res.send({ message: `Project with ID ${projectData.projectID} was updated successfully!` });
-    } else {
-      res.status(404).send({ message: `Project not found with ID ${projectData.projectID}` });
-    }
+      const result = await Project.updateByID(projectData);
+      if (result) {
+          res.send({ message: `Project with ID ${projectData.projectID} was updated successfully!` });
+      } else {
+          res.status(404).send({ message: `Project not found with ID ${projectData.projectID}` });
+      }
   } catch (error) {
-    console.error('Error updating project:', error);
-    res.status(500).send({ message: 'Internal server error' });
+      console.error('Error updating project:', error);
+      res.status(500).send({ message: 'Internal server error' });
   }
 };
 
