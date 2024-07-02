@@ -9,6 +9,13 @@ const userValidationRules = () => {
     ];
 }
 
+const projectValidationRules = () => {
+    return [
+        body('projectName').notEmpty().withMessage('Project Name must not be empty'),
+        body('managerID').notEmpty().withMessage('ManagerID must not be empty'),
+    ];
+}
+
 const validate = (req, res, next) => {
     const errors = validationResult(req);
 
@@ -21,5 +28,6 @@ const validate = (req, res, next) => {
 
 module.exports = {
     userValidationRules,
+    projectValidationRules,
     validate
 };

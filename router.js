@@ -4,8 +4,7 @@ const router = express.Router();
 const projectController = require("./controllers/project.controller");
 const userController = require("./controllers/user.controller");
 const logController = require("./controllers/log.controller");
-const projectManagerController = require("./controllers/projectManager.controller");
-const { userValidationRules, validate } = require('./middleware/validation');
+const { userValidationRules, projectValidationRules, validate } = require('./middleware/validation');
 const { authenticateToken, authorizedRoles } = require('./middleware/auth');
 
 //---------------------------------------------- User Routes ----------------------------------------------//
@@ -62,7 +61,7 @@ router.delete("/users/:userID", authenticateToken, authorizedRoles(['ADMIN']), u
 
 
 
-router.put("/users", authenticateToken, userController.update);
+router.put("/users", userValidationRules(), validate, authenticateToken, userController.update);
 
 
 router.put('/users/password', authenticateToken, userController.updateUserPassword);
@@ -73,7 +72,7 @@ router.put("/verifyToken", userController.verifyToken);
 
 
 //---------------------------------------------- Project Routes ----------------------------------------------//
-router.post("/projects", authenticateToken, authorizedRoles(['ADMIN', 'PROJECT_MANAGER']), projectController.create);
+router.post("/projects", projectValidationRules(), validate, authenticateToken, authorizedRoles(['ADMIN', 'PROJECT_MANAGER']), projectController.create);
 
 
 
@@ -83,13 +82,13 @@ router.get("/projects", authenticateToken, authorizedRoles(['ADMIN']), projectCo
 router.get("/projects/:userID", authenticateToken, projectController.findUserProjects);
 
 
-router.put("/projects", authenticateToken, authorizedRoles(['ADMIN', 'PROJECT_MANAGER']), projectController.update);
+router.put("/projects", projectValidationRules(), validate, authenticateToken, authorizedRoles(['ADMIN', 'PROJECT_MANAGER']), projectController.update);
 
 router.delete("/projects", authenticateToken, authorizedRoles(['ADMIN', 'PROJECT_MANAGER']), projectController.delete);
 
 
 
-router.put("/project/projectManager", authenticateToken, projectController.updateManagerID);
+router.put("/project/projectManager", authenticateToken, authorizedRoles(['ADMIN', 'PROJECT_MANAGER']), projectController.updateManagerID);
 
 
 //---------------------------------------------- Log Routes ----------------------------------------------//
