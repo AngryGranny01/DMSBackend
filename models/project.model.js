@@ -197,6 +197,31 @@ Project.updateByID = async (projectData) => {
     }
 };
 
+// Function to update the managerId of a project
+Project.updateManagerID = async (oldManagerID, newManagerID) => {
+    let conn;
+    try {
+      conn = await connectionPool.promise().getConnection();
+      await conn.beginTransaction();
+  
+      // Update the managerId in the Project table
+      const [result] = await conn.execute(
+        "UPDATE Project SET managerId = ? WHERE managerId = ?",
+        [newManagerID, oldManagerID]
+      );
+  
+      await conn.commit();
+      return result.affectedRows;
+    } catch (error) {
+      console.error("Error occurred while updating the manager ID: ", error);
+      await conn.rollback();
+      throw error;
+    } finally {
+      if (conn) {
+        conn.release();
+      }
+    }
+  };
 
 
 Project.remove = async (projectID) => {
@@ -205,9 +230,9 @@ Project.remove = async (projectID) => {
         conn = await connectionPool.promise().getConnection();
         await conn.beginTransaction();
 
-        await conn.execute("DELETE FROM Log WHERE projectID = ?", [projectID]);
-        await conn.execute("DELETE FROM Project_User WHERE projectID = ?", [projectID]);
-        const [result] = await conn.execute("DELETE FROM Project WHERE projectID = ?", [projectID]);
+        await conn.execute("DELETE FROM Account_Project WHERE projectId = ?", [projectID]);
+        await conn.execute("DELETE FROM Project_Document WHERE projectId = ?", [projectID]);
+        const [result] = await conn.execute("DELETE FROM Project WHERE id = ?", [projectID]);
 
         await conn.commit();
         return result.affectedRows;

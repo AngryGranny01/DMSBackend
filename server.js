@@ -8,7 +8,6 @@ const swaggerUI = require('swagger-ui-express');
 const swaggerSpec = require('./swagger');
 const rateLimit = require('express-rate-limit');
 
-
 const errorHandler = require('./middleware/errorHandler');
 const router = require('./router'); 
 
@@ -18,10 +17,14 @@ app.use(express.static('public'));
 // CORS Configuration
 const corsOptions = {
   origin: 'https://localhost:4200',
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+  optionsSuccessStatus: 200 // For legacy browser support
 };
+
 app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // Pre-flight support
 
 app.use(bodyParser.json());
 

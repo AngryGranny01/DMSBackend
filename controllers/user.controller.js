@@ -1,7 +1,10 @@
 const { User } = require("../models/user.model");
+const { Log } = require("../models/log.model");
 const jwt = require('jsonwebtoken');
 const { JWT_SECRET } = require("../constants/env");
 const { Role } = require("../models/role");
+const { TargetEnum } = require("../models/targetEnum");
+const { ActionEnum } = require("../models/actionEnum");
 
 // Create a new user
 exports.create = async (req, res) => {
@@ -152,6 +155,25 @@ exports.login = (req, res) => {
         });
 };
 
+exports.lastLoginDates = async (req, res) => {
+    try {
+        User.getUsersLastLogin((err, data) => {
+            if (err) {
+                res.status(500).send({
+                    message: "Some error occurred while retrieving last login dates."
+                });
+            } else {
+                res.send(data);
+            }
+        });
+    } catch (error) {
+        console.error("An error occurred: ", error);
+        res.status(500).send({
+            message: "Internal server error."
+        });
+    }
+};
+
 // Verify token and update password
 exports.verifyToken = async (req, res) => {
     const token = req.body.token;
@@ -178,24 +200,41 @@ exports.verifyToken = async (req, res) => {
         });
 
         if (existingPassword) {
-            return res.status(401).send({message: 'Token has expired.'});
+            return res.status(401).send({ message: 'Token has expired.' });
         }
 
         await new Promise((resolve, reject) => {
-            User.createPassword(accountID, passwordHash, salt, (err, data) => {
+            User.createPassword(accountID, passwordHash, salt, async (err, data) => {
                 if (err) {
+                    const log = {
+                        actorId: accountID,
+                        action: ActionEnum.ERROR,
+                        target: TargetEnum.PASSWORD,
+                        targetId: accountID,
+                        field: null,
+                        value: null,
+                    };
+                    await Log.create(log);
                     reject(err);
                 } else {
+                    const log = {
+                        actorId: accountID,
+                        action: ActionEnum.CREATE,
+                        target: TargetEnum.PASSWORD,
+                        targetId: accountID,
+                        field: null,
+                        value: null,
+                    };
+                    await Log.create(log);
                     resolve(data);
                 }
             });
         });
 
         res.send({ message: `User with id ${accountID} was updated successfully!` });
-
     } catch (error) {
         if (error.name === 'TokenExpiredError') {
-            return res.status(401).send({message: 'Token has expired.'});
+            return res.status(401).send({ message: 'Token has expired.' });
         }
         res.status(400).send('Invalid token');
     }

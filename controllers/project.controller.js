@@ -101,6 +101,37 @@ exports.update = async (req, res) => {
   }
 };
 
+// update the managerId of a project
+exports.updateManagerID = async (req, res) => {
+  try {
+    const { oldManagerID, newManagerID } = req.body;
+
+    if (!oldManagerID || !newManagerID) {
+      return res.status(400).send({
+        message: "Both oldManagerID and newManagerID are required"
+      });
+    }
+
+    const result = await Project.updateManagerID(oldManagerID, newManagerID);
+
+    if (result === 0) {
+      return res.status(404).send({
+        message: `No projects found with the oldManagerID ${oldManagerID}`
+      });
+    }
+
+    // If successful, return success message
+    res.send({ message: "Manager ID was updated successfully!" });
+  } catch (err) {
+    console.error(`Error updating manager ID from ${req.body.oldManagerID} to ${req.body.newManagerID}:`, err);
+    // For other errors, return 500 Internal Server Error
+    res.status(500).send({
+      message: `Could not update Manager ID`
+    });
+  }
+};
+
+
 // Delete a Project by ID
 exports.delete = async (req, res) => {
   try {

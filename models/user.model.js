@@ -293,7 +293,6 @@ User.remove = async (userID, response) => {
         conn = await connectionPool.promise().getConnection();
         await conn.beginTransaction();
 
-        await conn.execute("DELETE FROM log WHERE userID = ?", [userID]);
         await conn.execute("DELETE FROM project_user WHERE userID = ?", [userID]);
         await conn.execute("DELETE FROM projectmanager WHERE userID = ?", [userID]);
         const [userDeleteResult] = await conn.execute("DELETE FROM user WHERE userID = ?", [userID]);
@@ -304,6 +303,44 @@ User.remove = async (userID, response) => {
         await conn.rollback();
         console.error("Error occurred while deleting the user: ", error);
         response({ message: "Error occurred while deleting the user" }, null);
+    } finally {
+        if (conn) {
+            conn.release();
+        }
+    }
+};
+
+// Method to get last login date for active users
+User.getUsersLastLogin = async (result) => {
+    let conn;
+    try {
+        conn = await connectionPool.promise().getConnection();
+
+        // Query to find the newest login date for all active users
+        const selectLastLoginSql = `
+        SELECT 
+            l.actorId AS userID,
+            MAX(l.timeStampLog) AS newestDate
+        FROM 
+            Log l
+            JOIN Account a ON l.actorId = a.id
+        WHERE 
+            l.action = 'login'
+            AND a.isDeactivated = false
+        GROUP BY 
+            l.actorId;
+        `;
+
+        const [dateRows] = await conn.execute(selectLastLoginSql);
+        const lastLoginDates = dateRows.map(dateRow => ({
+            date: dateRow.newestDate,
+            userID: dateRow.userID
+        }));
+
+        result(null, lastLoginDates);
+    } catch (error) {
+        console.error("Error occurred while fetching users' last login dates: ", error);
+        result(error, null);
     } finally {
         if (conn) {
             conn.release();

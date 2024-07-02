@@ -155,4 +155,6 @@ VALUES
     ( 1, 'create', 'account', 11, NULL, NULL),
     ( 1, 'create', 'account', 12, NULL, NULL),
     ( 1, 'create', 'account', 13, NULL, NULL),
-    ( 1, 'create', 'account', 14, NULL, NULL);
+    ( 1, 'create', 'account', 14, NULL, NULL),
+    ( 1, 'create', 'project', 20240001, NULL, NULL),
+    ( 1, 'create', 'project', 20240002, NULL, NULL);
