@@ -456,11 +456,114 @@ router.delete("/projects", authenticateToken, authorizedRoles(['ADMIN', 'PROJECT
 
 
 //---------------------------------------------- Log Routes ----------------------------------------------//
+
+/**
+ * @swagger
+ * /logs:
+ *   post:
+ *     summary: Create a new log entry
+ *     tags: [Log]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - actorId
+ *               - action
+ *               - target
+ *             properties:
+ *               actorId:
+ *                 type: integer
+ *               action:
+ *                 type: string
+ *               target:
+ *                 type: string
+ *               targetId:
+ *                 type: integer
+ *               field:
+ *                 type: string
+ *               value:
+ *                 type: string
+ *               currentActorRole:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Log entry created successfully
+ *       400:
+ *         description: Invalid or empty request body
+ *       500:
+ *         description: Internal server error
+ */
 router.post('/logs', authenticateToken, logController.create);
+
+/**
+ * @swagger
+ * /logs/project/{projectID}:
+ *   get:
+ *     summary: Retrieve logs for a specific project by projectID
+ *     tags: [Log]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: projectID
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: The ID of the project to retrieve logs for
+ *     responses:
+ *       200:
+ *         description: Logs retrieved successfully
+ *       404:
+ *         description: Project Log not found
+ *       500:
+ *         description: Internal server error
+ */
 router.get('/logs/project/:projectID', authenticateToken, logController.findProjectLogs);
+
+/**
+ * @swagger
+ * /logs/user/{userID}:
+ *   get:
+ *     summary: Retrieve logs for a specific user by userID
+ *     tags: [Log]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userID
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: The ID of the user to retrieve logs for
+ *     responses:
+ *       200:
+ *         description: Logs retrieved successfully
+ *       404:
+ *         description: User Log not found
+ *       500:
+ *         description: Internal server error
+ */
 router.get('/logs/user/:userID', authenticateToken, logController.findUserLogs);
 
-
+/**
+ * @swagger
+ * /logs/lastLogins:
+ *   get:
+ *     summary: Retrieve the last login dates for all users
+ *     tags: [Log]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Last login dates retrieved successfully
+ *       500:
+ *         description: Internal server error
+ */
 router.get("/logs/lastLogins", authenticateToken, userController.lastLoginDates);
 
 
