@@ -19,7 +19,6 @@ User.create = async (userData) => {
         await conn.beginTransaction();
 
         let isAdmin = userData.role === Role.ADMIN;
-        let isProjectManager = userData.role === Role.PROJECT_MANAGER || isAdmin;
 
         // Insert into Person table
         const insertPersonSql = `
@@ -89,7 +88,7 @@ User.getAll = async (response) => {
         // Query to get all users with their roles and deactivation status
         const query = `
             SELECT 
-                p.id AS userID, 
+                a.id AS userID, 
                 p.firstName, 
                 p.lastName, 
                 p.email, 
@@ -495,7 +494,7 @@ User.findSaltByEmail = async (email) => {
             JOIN Password pw ON a.id = pw.accountId
             WHERE p.email = ?`;
         const [rows] = await conn.execute(query, [email]);
-
+        console.log(rows[0])
         if (rows.length === 0) {
             throw new Error('No user found with this email');
         }

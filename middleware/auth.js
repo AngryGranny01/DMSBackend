@@ -21,6 +21,7 @@ function authenticateToken(req, res, next) {
 
 function authorizedRoles(allowedRoles) {
     return (req, res, next) => {
+        console.log("Authorize")
         if (!allowedRoles.includes(req.user.role)) {
             return res.sendStatus(403); // 403 Forbidden if user lacks the required role
         }

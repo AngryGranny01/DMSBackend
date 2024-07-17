@@ -14,7 +14,7 @@ exports.create = async (req, res) => {
 
     try {
         const userID = await User.create(req.body);
-        res.status(201).send({ userID });
+        res.status(201).send({ userID: userID });
     } catch (err) {
         res.status(500).send({ message: err.message || "Some error occurred while creating the User." });
     }
@@ -206,15 +206,6 @@ exports.verifyToken = async (req, res) => {
         await new Promise((resolve, reject) => {
             User.createPassword(accountID, passwordHash, salt, async (err, data) => {
                 if (err) {
-                    const log = {
-                        actorId: accountID,
-                        action: ActionEnum.ERROR,
-                        target: TargetEnum.PASSWORD,
-                        targetId: accountID,
-                        field: null,
-                        value: null,
-                    };
-                    await Log.create(log);
                     reject(err);
                 } else {
                     const log = {
@@ -225,11 +216,16 @@ exports.verifyToken = async (req, res) => {
                         field: null,
                         value: null,
                     };
-                    await Log.create(log);
+                    try {
+                        await Log.create(log);
+                    } catch (logError) {
+                        console.error("Failed to log create action:", logError);
+                    }
                     resolve(data);
                 }
             });
         });
+
 
         res.send({ message: `User with id ${accountID} was updated successfully!` });
     } catch (error) {

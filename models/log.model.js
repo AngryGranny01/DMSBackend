@@ -15,12 +15,12 @@ const Log = function (log, timeStamp, user) {
 };
 
 // Create a new Log entry
-Log.create = async (log, result) => {
+Log.create = async (log) => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
         await conn.beginTransaction();
-
+        console.log(log)
         const insertLogSql = `
             INSERT INTO Log (actorId, action, target, targetId, field, value, timeStampLog) 
             VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -37,11 +37,10 @@ Log.create = async (log, result) => {
 
         await conn.execute(insertLogSql, logData);
         await conn.commit();
-        result(null, null);
     } catch (error) {
         if (conn) await conn.rollback();
         console.error("Error occurred while inserting a new Log Entry: ", error);
-        result(error, null);
+        throw error
     } finally {
         if (conn) conn.release();
     }
@@ -49,7 +48,7 @@ Log.create = async (log, result) => {
 
 
 // Find all Logs by projectID
-Log.findLogsByProjectID = async (projectID, result) => {
+Log.findLogsByProjectID = async (projectID) => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
@@ -76,17 +75,17 @@ Log.findLogsByProjectID = async (projectID, result) => {
             lastName: logRow.lastName
         }));
 
-        result(null, projectLogs);
+        return projectLogs;
     } catch (error) {
         console.error("Error retrieving Project Logs from database:", error);
-        result({ message: "Error retrieving Project Logs from database" }, null);
+        throw error
     } finally {
         if (conn) conn.release();
     }
 };
 
 // Find all Logs by User ID
-Log.findLogsByUserID = async (userID, result) => {
+Log.findLogsByUserID = async (userID) => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
@@ -114,10 +113,10 @@ Log.findLogsByUserID = async (userID, result) => {
             lastName: logRow.lastName
         }));
 
-        result(null, usersLog);
+        return usersLog;
     } catch (error) {
         console.error("Error retrieving User Logs from database:", error);
-        result({ message: "Error retrieving User Logs from database" }, null);
+        throw error
     } finally {
         if (conn) conn.release();
     }

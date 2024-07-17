@@ -33,3 +33,15 @@ BEGIN
 END $$
 
 DELIMITER ;
+
+
+CREATE TRIGGER before_log_insert
+BEFORE INSERT ON Log
+FOR EACH ROW
+BEGIN
+    IF NEW.target = 'Person' THEN
+        IF NOT EXISTS (SELECT 1 FROM Person WHERE id = NEW.targetId) THEN
+            SIGNAL SQLSTATE '23000'
+            SET MESSAGE_TEXT = 'Invalid targetId for target Person';
+        END IF;
+    ELSEIF NEW.target = 'Document' THEN etc..

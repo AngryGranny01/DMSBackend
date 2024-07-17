@@ -1,5 +1,4 @@
 const { connectionPool } = require("./db");
-const { Role } = require("./role");
 
 const Project = function (project, dateTime) {
     this.projectID = project.projectID;
@@ -67,13 +66,14 @@ Project.getAll = async () => {
         if (projectRows.length > 0) {
             for (const projectRow of projectRows) {
                 const managerQuery = `
-                SELECT p.id as accountID, p.firstName, p.lastName, p.email, ou.orgUnit 
+                SELECT a.id as accountID, p.firstName, p.lastName, p.email, ou.orgUnit 
                 FROM Account a
                 JOIN Person p ON a.personId = p.id
                 JOIN Person_OrgUnit ou ON p.id = ou.personId
                 WHERE a.id = ?`;
 
                 const [projectManager] = await conn.execute(managerQuery, [projectRow.managerId]);
+                console.log(projectManager[0])
                 const [projectUserRows] = await conn.execute('SELECT accountId FROM Account_Project WHERE projectId = ?', [projectRow.id]);
                 const users = await Project.getProjectUsers(projectUserRows);
 
@@ -119,13 +119,15 @@ Project.findByUserID = async (userID) => {
         if (projectRows.length > 0) {
             for (const projectRow of projectRows) {
                 const managerQuery = `
-                SELECT p.id as accountID, p.firstName, p.lastName, p.email, ou.orgUnit 
+                SELECT a.id as accountID, p.firstName, p.lastName, p.email, ou.name as orgUnit 
                 FROM Account a
                 JOIN Person p ON a.personId = p.id
-                JOIN Person_OrgUnit ou ON p.id = ou.personId
-                WHERE a.id = ?`;
+                JOIN Person_OrgUnit pou ON p.id = pou.personId
+                JOIN OrgUnit ou ON pou.orgUnit = ou.name
+                WHERE a.id = ?;`;
 
                 const [projectManager] = await conn.execute(managerQuery, [projectRow.managerId]);
+                console.log(projectManager[0])
                 const [projectUserRows] = await conn.execute('SELECT accountId FROM Account_Project WHERE projectId = ?', [projectRow.id]);
                 const users = await Project.getProjectUsers(projectUserRows);
 
@@ -164,7 +166,7 @@ Project.updateByID = async (projectData) => {
     try {
         conn = await connectionPool.promise().getConnection();
         await conn.beginTransaction();
-
+        console.log(projectData)
         await conn.execute(
             'UPDATE Project SET name = ?, description = ?, endOfProjectDate = ?, managerId = ? WHERE id = ?',
             [
@@ -201,27 +203,27 @@ Project.updateByID = async (projectData) => {
 Project.updateManagerID = async (oldManagerID, newManagerID) => {
     let conn;
     try {
-      conn = await connectionPool.promise().getConnection();
-      await conn.beginTransaction();
-  
-      // Update the managerId in the Project table
-      const [result] = await conn.execute(
-        "UPDATE Project SET managerId = ? WHERE managerId = ?",
-        [newManagerID, oldManagerID]
-      );
-  
-      await conn.commit();
-      return result.affectedRows;
+        conn = await connectionPool.promise().getConnection();
+        await conn.beginTransaction();
+
+        // Update the managerId in the Project table
+        const [result] = await conn.execute(
+            "UPDATE Project SET managerId = ? WHERE managerId = ?",
+            [newManagerID, oldManagerID]
+        );
+
+        await conn.commit();
+        return result.affectedRows;
     } catch (error) {
-      console.error("Error occurred while updating the manager ID: ", error);
-      await conn.rollback();
-      throw error;
+        console.error("Error occurred while updating the manager ID: ", error);
+        await conn.rollback();
+        throw error;
     } finally {
-      if (conn) {
-        conn.release();
-      }
+        if (conn) {
+            conn.release();
+        }
     }
-  };
+};
 
 
 Project.remove = async (projectID) => {
