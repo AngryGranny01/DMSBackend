@@ -141,20 +141,18 @@ VALUES
     -- (3, 20250001),
     (4, 20240002);
 
-INSERT INTO Log (actorId, action, target, targetId, field, value)
+INSERT INTO Log (actorId, action, target, targetId, field, value,currentActorRole)
 VALUES
-    ( 1, 'create', 'account', 2, NULL, NULL),
-    ( 1, 'create', 'account', 3, NULL, NULL),
-    ( 1, 'create', 'account', 4, NULL, NULL),
-    ( 1, 'create', 'account', 5, NULL, NULL),
-    ( 1, 'create', 'account', 6, NULL, NULL),
-    ( 1, 'create', 'account', 7, NULL, NULL),
-    ( 1, 'create', 'account', 8, NULL, NULL),
-    ( 1, 'create', 'account', 9, NULL, NULL),
-    ( 1, 'create', 'account', 10, NULL, NULL),
-    ( 1, 'create', 'account', 11, NULL, NULL),
-    ( 1, 'create', 'account', 12, NULL, NULL),
-    ( 1, 'create', 'account', 13, NULL, NULL),
-    ( 1, 'create', 'account', 14, NULL, NULL),
-    ( 1, 'create', 'project', 20240001, NULL, NULL),
-    ( 1, 'create', 'project', 20240002, NULL, NULL);
+    ( 1, 'create', 'account', 2, NULL, NULL, 'ADMIN'),
+    ( 1, 'create', 'account', 3, NULL, NULL, 'ADMIN'),
+    ( 1, 'create', 'account', 4, NULL, NULL, 'ADMIN'),
+    ( 1, 'create', 'account', 5, NULL, NULL, 'ADMIN'),
+    ( 1, 'create', 'account', 6, NULL, NULL, 'ADMIN'),
+    ( 1, 'create', 'account', 7, NULL, NULL, 'ADMIN'),
+    ( 1, 'create', 'account', 8, NULL, NULL, 'ADMIN'),
+    ( 1, 'create', 'account', 9, NULL, NULL, 'ADMIN'),
+    ( 1, 'create', 'account', 10, NULL, NULL,'ADMIN'),
+    ( 1, 'create', 'account', 11, NULL, NULL,'ADMIN'),
+    ( 1, 'create', 'account', 12, NULL, NULL,'ADMIN'),
+    ( 1, 'create', 'project', 20240001, NULL, NULL, 'ADMIN'),
+    ( 1, 'create', 'project', 20240002, NULL, NULL, 'ADMIN');

@@ -203,29 +203,27 @@ exports.verifyToken = async (req, res) => {
             return res.status(401).send({ message: 'Token has expired.' });
         }
 
-        await new Promise((resolve, reject) => {
-            User.createPassword(accountID, passwordHash, salt, async (err, data) => {
+        const userRoleData = await new Promise((resolve, reject) => {
+            User.createPassword(accountID, passwordHash, salt, (err, data) => {
                 if (err) {
                     reject(err);
                 } else {
-                    const log = {
-                        actorId: accountID,
-                        action: ActionEnum.CREATE,
-                        target: TargetEnum.PASSWORD,
-                        targetId: accountID,
-                        field: null,
-                        value: null,
-                    };
-                    try {
-                        await Log.create(log);
-                    } catch (logError) {
-                        console.error("Failed to log create action:", logError);
-                    }
                     resolve(data);
                 }
             });
         });
 
+        const log = {
+            actorId: accountID,
+            action: ActionEnum.CREATE,
+            target: TargetEnum.PASSWORD,
+            targetId: accountID,
+            field: null,
+            value: null,
+            currentActorRole: userRoleData.role
+        };
+
+        await Log.create(log);
 
         res.send({ message: `User with id ${accountID} was updated successfully!` });
     } catch (error) {

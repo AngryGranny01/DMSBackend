@@ -124,8 +124,10 @@ CREATE TABLE IF NOT EXISTS Log (
     targetId INT,
     field VARCHAR(255),
     value VARCHAR(255),
+    currentActorRole VARCHAR(255) NOT NULL,
     timeStampLog TIMESTAMP NOT NULL DEFAULT NOW(),
     FOREIGN KEY (actorId) REFERENCES Account(id),
     FOREIGN KEY (action) REFERENCES Action(name) ON UPDATE CASCADE,
-    FOREIGN KEY (target) REFERENCES Target(name) ON UPDATE CASCADE
+    FOREIGN KEY (target) REFERENCES Target(name) ON UPDATE CASCADE,
+    FOREIGN KEY (currentActorRole) REFERENCES UserRole(name) ON UPDATE CASCADE
 );

@@ -12,6 +12,7 @@ const Log = function (log, timeStamp, user) {
     this.timeStampLog = timeStamp;
     this.firstName = user.firstName;
     this.lastName = user.lastName;
+    this.currentActorRole = log.currentActorRole;
 };
 
 // Create a new Log entry
@@ -22,8 +23,8 @@ Log.create = async (log) => {
         await conn.beginTransaction();
         console.log(log)
         const insertLogSql = `
-            INSERT INTO Log (actorId, action, target, targetId, field, value, timeStampLog) 
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO Log (actorId, action, target, targetId, field, value, currentActorRole ,timeStampLog) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         `;
         const logData = [
             log.actorId,
@@ -32,6 +33,7 @@ Log.create = async (log) => {
             log.targetId,
             log.field,
             log.value,
+            log.currentActorRole,
             new Date()
         ];
 
@@ -72,7 +74,8 @@ Log.findLogsByProjectID = async (projectID) => {
             value: logRow.value,
             timeStamp: logRow.timeStampLog,
             firstName: logRow.firstName,
-            lastName: logRow.lastName
+            lastName: logRow.lastName,
+            currentActorRole: logRow.currentActorRole
         }));
 
         return projectLogs;
@@ -110,7 +113,8 @@ Log.findLogsByUserID = async (userID) => {
             value: logRow.value,
             timeStamp: logRow.timeStampLog,
             firstName: logRow.firstName,
-            lastName: logRow.lastName
+            lastName: logRow.lastName,
+            currentActorRole: logRow.currentActorRole
         }));
 
         return usersLog;

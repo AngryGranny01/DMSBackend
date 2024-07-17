@@ -218,15 +218,18 @@ User.createPassword = async (accountID, passwordHash, salt, response) => {
             `INSERT INTO Password (accountId, hash, salt) VALUES (?, ?, ?)`,
             [accountID, passwordHash, salt]
         );
-
-        // Set isDeactivated to false in the Account table
-        await conn.execute(
-            `UPDATE Account SET isDeactivated = false WHERE id = ?`,
+        //find role associated with accountID
+        const [rows] = await conn.execute(
+            `SELECT userRole FROM Account_UserRole WHERE accountId = ?`,
             [accountID]
         );
+        if (rows.length === 0) {
+            throw new Error(`No role found for account ID ${accountID}`);
+        }
 
+        const role = rows[0].userRole;
         await conn.commit();
-        response(null, `Password created successfully and account activated`);
+        response(null, { role });
 
     } catch (error) {
         await conn.rollback();
@@ -325,7 +328,6 @@ User.getUsersLastLogin = async (result) => {
             JOIN Account a ON l.actorId = a.id
         WHERE 
             l.action = 'login'
-            AND a.isDeactivated = false
         GROUP BY 
             l.actorId;
         `;
