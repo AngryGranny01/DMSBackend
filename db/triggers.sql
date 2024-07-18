@@ -35,6 +35,7 @@ END $$
 DELIMITER ;
 
 
+DELIMITER $$
 CREATE TRIGGER before_log_insert
 BEFORE INSERT ON Log
 FOR EACH ROW
@@ -44,4 +45,31 @@ BEGIN
             SIGNAL SQLSTATE '23000'
             SET MESSAGE_TEXT = 'Invalid targetId for target Person';
         END IF;
-    ELSEIF NEW.target = 'Document' THEN etc..
+    ELSEIF NEW.target = 'Document' THEN
+        IF NOT EXISTS (SELECT 1 FROM Document WHERE id = NEW.targetId) THEN
+            SIGNAL SQLSTATE '23000'
+            SET MESSAGE_TEXT = 'Invalid targetId for target Document';
+        END IF;
+    ELSEIF NEW.target = 'Project' THEN
+        IF NOT EXISTS (SELECT 1 FROM Project WHERE id = NEW.targetId) THEN
+            SIGNAL SQLSTATE '23000'
+            SET MESSAGE_TEXT = 'Invalid targetId for target Project';
+        END IF;
+    ELSEIF NEW.target = 'Account' THEN
+        IF NOT EXISTS (SELECT 1 FROM Account WHERE id = NEW.targetId) THEN
+            SIGNAL SQLSTATE '23000'
+            SET MESSAGE_TEXT = 'Invalid targetId for target Account';
+        END IF;
+    ELSEIF NEW.target = 'Revocation' THEN
+        IF NOT EXISTS (SELECT 1 FROM Revocation WHERE id = NEW.targetId) THEN
+            SIGNAL SQLSTATE '23000'
+            SET MESSAGE_TEXT = 'Invalid targetId for target Revocation';
+        END IF;
+    ELSEIF NEW.target = 'ConsentForm' THEN
+        IF NOT EXISTS (SELECT 1 FROM ConsentForm WHERE id = NEW.targetId) THEN
+            SIGNAL SQLSTATE '23000'
+            SET MESSAGE_TEXT = 'Invalid targetId for target ConsentForm';
+        END IF;
+    END IF;
+END$$
+DELIMITER;
