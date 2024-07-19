@@ -288,23 +288,18 @@ User.updatePassword = async (accountID, passwordHash, salt, response) => {
 };
 
 
-// Function to delete a user by ID
-User.remove = async (userID, response) => {
+User.deactivateAccount = async (accountID) => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
-        await conn.beginTransaction();
-
-        await conn.execute("DELETE FROM project_user WHERE userID = ?", [userID]);
-        await conn.execute("DELETE FROM projectmanager WHERE userID = ?", [userID]);
-        const [userDeleteResult] = await conn.execute("DELETE FROM user WHERE userID = ?", [userID]);
-
-        await conn.commit();
-        response(null, userDeleteResult.affectedRows);
+        const [result] = await conn.execute(
+            `UPDATE Account SET isDeactivated = true WHERE id = ?`,
+            [accountID]
+        );
+        return result;
     } catch (error) {
-        await conn.rollback();
-        console.error("Error occurred while deleting the user: ", error);
-        response({ message: "Error occurred while deleting the user" }, null);
+        console.error("Error occurred while deactivating account: ", error);
+        throw error;
     } finally {
         if (conn) {
             conn.release();

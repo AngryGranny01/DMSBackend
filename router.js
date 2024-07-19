@@ -166,27 +166,27 @@ router.get("/users", authenticateToken, authorizedRoles(['ADMIN', 'PROJECT MANAG
 
 /**
  * @swagger
- * /users/{userID}:
- *   delete:
- *     summary: Deletes a user by ID
+ * /users/deactivate/{accountID}:
+ *   put:
+ *     summary: Deactivate a user account by ID
  *     tags: [User]
  *     security:
  *       - bearerAuth: []
  *     parameters:
- *       - name: userID
+ *       - name: accountID
  *         in: path
  *         required: true
  *         schema:
  *           type: integer
  *     responses:
  *       200:
- *         description: User was deleted successfully
+ *         description: Account was deactivated successfully
  *       404:
- *         description: User not found
+ *         description: Account not found
  *       500:
  *         description: Internal server error
  */
-router.delete("/users/:userID", authenticateToken, authorizedRoles(['ADMIN']), userController.delete);
+router.put('/users/deactivate/:accountID', authenticateToken, authorizedRoles(['ADMIN']), userController.deactivateAccount);
 
 /**
  * @swagger

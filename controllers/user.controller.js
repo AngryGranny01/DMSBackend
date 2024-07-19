@@ -89,17 +89,19 @@ exports.updateUserPassword = (req, res) => {
     });
 };
 
-// Delete a User by ID
-exports.delete = (req, res) => {
-    User.remove(req.params.userID, (err, data) => {
-        if (err) {
-            return res.status(500).send({ message: "Could not delete User" });
+// Deactivate a user account by ID
+exports.deactivateAccount = async (req, res) => {
+    const accountID = req.params.accountID;
+
+    try {
+        const result = await User.deactivateAccount(accountID);
+        if (result.affectedRows === 0) {
+            return res.status(404).send({ message: `Account with ID ${accountID} not found.` });
         }
-        if (data === 0) {
-            return res.status(404).send({ message: `User with id ${req.params.userID} not found.` });
-        }
-        res.send({ message: "User was deleted successfully!" });
-    });
+        res.send({ message: `Account with ID ${accountID} was deactivated successfully!` });
+    } catch (error) {
+        res.status(500).send({ message: `Error deactivating account with ID ${accountID}.` });
+    }
 };
 
 // Check if email already exists
