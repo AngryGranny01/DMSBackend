@@ -2,10 +2,7 @@ CREATE DATABASE IF NOT EXISTS dmsproject;
 
 USE dmsproject;
 
-
-CREATE TABLE IF NOT EXISTS OrgUnit (
-    name VARCHAR(255) PRIMARY KEY
-);
+CREATE TABLE IF NOT EXISTS OrgUnit (name VARCHAR(255) PRIMARY KEY);
 
 CREATE TABLE IF NOT EXISTS Staff (
     id INT PRIMARY KEY AUTO_INCREMENT,
@@ -30,9 +27,7 @@ CREATE TABLE IF NOT EXISTS Password (
     FOREIGN KEY (accountId) REFERENCES Account(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS UserRole (
-    name VARCHAR(255) PRIMARY KEY
-);
+CREATE TABLE IF NOT EXISTS UserRole (name VARCHAR(255) PRIMARY KEY);
 
 CREATE TABLE IF NOT EXISTS Account_UserRole (
     accountId INT NOT NULL,
@@ -46,7 +41,9 @@ CREATE TABLE IF NOT EXISTS Document (
     id INT PRIMARY KEY AUTO_INCREMENT,
     uploadTimestamp TIMESTAMP NOT NULL DEFAULT NOW(),
     filename VARCHAR(255) NOT NULL,
-    filepath VARCHAR(255) NOT NULL
+    filepath VARCHAR(255) NOT NULL,
+    uploaderId INT UNIQUE,
+    FOREIGN KEY (uploaderId) REFERENCES Staff(id)
 );
 
 CREATE TABLE IF NOT EXISTS Consenter (
@@ -56,23 +53,32 @@ CREATE TABLE IF NOT EXISTS Consenter (
 );
 
 CREATE TABLE IF NOT EXISTS Project (
-    id INT PRIMARY KEY AUTO_INCREMENT, -- YYYY%04d
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    -- YYYY%04d
     name VARCHAR(255) NOT NULL,
     description VARCHAR(255),
     remark VARCHAR(255),
     endOfProjectDate DATE,
-    archivalDelay INT NOT NULL DEFAULT 1, -- in months
-    archivalDuration INT NOT NULL DEFAULT 120, -- in months
-    managerId INT NOT NULL, -- ! not null necessary? (admin has access anyways..)
+    archivalDelay INT NOT NULL DEFAULT 1,
+    -- in months
+    archivalDuration INT NOT NULL DEFAULT 120,
+    -- in months
+    isArchived BOOLEAN NOT NULL DEFAULT false,
+    managerId INT NOT NULL,
+    -- ! not null necessary? (admin has access anyways..)
     templateId INT UNIQUE,
-    FOREIGN KEY (managerId) REFERENCES Account(id), -- ! does mysql allow SET DEFAULT? -- rollback on cascade here?
-    FOREIGN KEY (templateId) REFERENCES Document(id) ON DELETE SET NULL
+    FOREIGN KEY (managerId) REFERENCES Account(id),
+    -- ! does mysql allow SET DEFAULT? -- rollback on cascade here?
+    FOREIGN KEY (templateId) REFERENCES Document(id) ON DELETE
+    SET
+        NULL
 );
 
 CREATE TABLE IF NOT EXISTS Account_Project (
     accountId INT NOT NULL,
     projectId INT NOT NULL,
-    PRIMARY KEY (projectId, accountId), -- name most selective column first for better performance
+    PRIMARY KEY (projectId, accountId),
+    -- name most selective column first for better performance
     FOREIGN KEY (accountId) REFERENCES Account(id) ON DELETE CASCADE,
     FOREIGN KEY (projectId) REFERENCES Project(id) ON DELETE CASCADE
 );
@@ -94,36 +100,43 @@ CREATE TABLE IF NOT EXISTS Project_Document (
 
 CREATE TABLE IF NOT EXISTS ConsentForm (
     id INT PRIMARY KEY AUTO_INCREMENT,
-    signatureDate Date NOT NULL,
     projectId INT NOT NULL,
-    informedBy INT,
     consentedBy INT NOT NULL,
     documentId INT UNIQUE NOT NULL,
     revocationId INT UNIQUE,
     FOREIGN KEY (projectId) REFERENCES Project(id) ON DELETE CASCADE,
-    FOREIGN KEY (informedBy) REFERENCES Staff(id),
     FOREIGN KEY (consentedBy) REFERENCES Consenter(id),
     FOREIGN KEY (documentId) REFERENCES Document(id) ON DELETE CASCADE,
-    FOREIGN KEY (revocationId) REFERENCES Revocation(id) ON DELETE SET NULL
+    FOREIGN KEY (revocationId) REFERENCES Revocation(id) ON DELETE
+    SET
+        NULL
 );
 
-CREATE TABLE IF NOT EXISTS Action ( -- log action
+CREATE TABLE IF NOT EXISTS Action (
+    -- log action
     name VARCHAR(255) PRIMARY KEY
 );
 
-CREATE TABLE IF NOT EXISTS Target ( -- log target
+CREATE TABLE IF NOT EXISTS Target (
+    -- log target
     name VARCHAR(255) PRIMARY KEY
 );
 
 CREATE TABLE IF NOT EXISTS Log (
     id INT PRIMARY KEY AUTO_INCREMENT,
-    actorId INT NOT NULL, -- user performing an action
-    currentActorRole VARCHAR(255) NOT NULL, -- user role at the time
+    actorId INT NOT NULL,
+    -- user performing an action
+    currentActorRole VARCHAR(255) NOT NULL,
+    -- user role at the time
     action VARCHAR(255) NOT NULL,
-    target VARCHAR(255), -- table name (project, account, document, etc.) of the entity effected by the action
-    targetId INT, -- record id for record lookup in the respective table
-    field VARCHAR(255), -- property key effected
-    value VARCHAR(255), -- new property value
+    target VARCHAR(255),
+    -- table name (project, account, document, etc.) of the entity effected by the action
+    targetId INT,
+    -- record id for record lookup in the respective table
+    field VARCHAR(255),
+    -- property key effected
+    value VARCHAR(255),
+    -- new property value
     timestamp TIMESTAMP NOT NULL DEFAULT NOW(),
     FOREIGN KEY (actorId) REFERENCES Account(id),
     FOREIGN KEY (action) REFERENCES Action(name) ON UPDATE CASCADE,
