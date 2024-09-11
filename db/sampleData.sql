@@ -43,7 +43,7 @@ VALUES
     ('revocation'),
     ('password');
 
-INSERT INTO Person (firstName, lastName, email)
+INSERT INTO Staff (firstName, lastName, email)
 VALUES
     ('Robert-Johann', 'Dienst', 'rodienst@edu.aau.at'),
     ('Aron', 'Sacherer', 'aronsa@edu.aau.at'),
@@ -60,7 +60,7 @@ VALUES
     ('Olivia', 'Davis', 'olivia@example.com'), -- person without account
     ('Joshua', 'Wilson', 'joshua@example.com'); -- person without account
 
-INSERT INTO Person_OrgUnit (personId, orgUnit)
+INSERT INTO Person_OrgUnit (staffId, orgUnit)
 VALUES
     (1, 'Syssec'),
     (2, 'Syssec'),
@@ -75,7 +75,7 @@ VALUES
     (11, 'Isbi'),
     (12, 'Prosys');
 
-INSERT INTO Account (personId)
+INSERT INTO Account (staffId)
 VALUES
     (1), -- admin
     (2),

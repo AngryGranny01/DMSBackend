@@ -1,17 +1,17 @@
 USE dmsproject;
 
--- Sets projectId on insert of new project in the format YYYY%04d, where YYYY represents the current year and %04d are the first 4 digits of the counter of this year's projects (e.g. 20240023 for the 23. project in 2024)
+-- Sets projectId on insert of new project in the format YYYY%04d
 DELIMITER $$
 
-CREATE OR ALTER TRIGGER before_project_insert_check_id
-BEFORE INSERT ON project
+CREATE TRIGGER before_project_insert_check_id
+BEFORE INSERT ON Project
 FOR EACH ROW
 BEGIN
     DECLARE max_projectId INT;
     DECLARE baseId INT;
 
     -- Get the currently highest projectId
-    SELECT MAX(id) INTO max_projectId FROM project;
+    SELECT MAX(id) INTO max_projectId FROM Project;
 
     -- Determine the current year's base ID
     SET baseId = YEAR(NOW()) * 10000;
@@ -31,19 +31,19 @@ BEGIN
         END IF;
     END IF;
 END $$
-
 DELIMITER ;
 
-
+-- Ensures valid targetId for the specified target in Log table
 DELIMITER $$
+
 CREATE TRIGGER before_log_insert
 BEFORE INSERT ON Log
 FOR EACH ROW
 BEGIN
-    IF NEW.target = 'Person' THEN
-        IF NOT EXISTS (SELECT 1 FROM Person WHERE id = NEW.targetId) THEN
+    IF NEW.target = 'Staff' THEN
+        IF NOT EXISTS (SELECT 1 FROM Staff WHERE id = NEW.targetId) THEN
             SIGNAL SQLSTATE '23000'
-            SET MESSAGE_TEXT = 'Invalid targetId for target Person';
+            SET MESSAGE_TEXT = 'Invalid staffId for target Staff';
         END IF;
     ELSEIF NEW.target = 'Document' THEN
         IF NOT EXISTS (SELECT 1 FROM Document WHERE id = NEW.targetId) THEN
@@ -71,5 +71,5 @@ BEGIN
             SET MESSAGE_TEXT = 'Invalid targetId for target ConsentForm';
         END IF;
     END IF;
-END$$
-DELIMITER;
+END $$
+DELIMITER ;
