@@ -20,9 +20,9 @@ User.create = async (userData) => {
 
         let isAdmin = userData.role === Role.ADMIN;
 
-        // Insert into Person table
+        // Insert into Staff table
         const insertPersonSql = `
-            INSERT INTO Person (firstName, lastName, email) 
+            INSERT INTO Staff (firstName, lastName, email) 
             VALUES (?, ?, ?)`;
         const [rowsPerson] = await conn.execute(insertPersonSql, [
             userData.firstName,
@@ -30,14 +30,14 @@ User.create = async (userData) => {
             userData.email
         ]);
 
-        const personID = rowsPerson.insertId;
+        const staffId = rowsPerson.insertId;
 
         // Insert into Account table
         const insertAccountSql = `
-            INSERT INTO Account (personId, isDeactivated) 
+            INSERT INTO Account (staffId, isDeactivated) 
             VALUES (?, ?)`;
         const [rowsAccount] = await conn.execute(insertAccountSql, [
-            personID,
+            staffId,
             true
         ]);
 
@@ -45,10 +45,10 @@ User.create = async (userData) => {
 
         // Insert into Person_OrgUnit table
         const insertOrgUnitSql = `
-            INSERT INTO Person_OrgUnit (personId, orgUnit) 
+            INSERT INTO Person_OrgUnit (staffId, orgUnit) 
             VALUES (?, ?)`;
         await conn.execute(insertOrgUnitSql, [
-            personID,
+            staffId,
             userData.orgUnit
         ]);
 
@@ -96,11 +96,11 @@ User.getAll = async (response) => {
                 a.isDeactivated,
                 GROUP_CONCAT(aur.userRole) AS roles
             FROM 
-                Person p
+                Staff p
             JOIN 
-                Account a ON p.id = a.personId
+                Account a ON p.id = a.staffId
             LEFT JOIN 
-                Person_OrgUnit po ON p.id = po.personId
+                Person_OrgUnit po ON p.id = po.staffId
             LEFT JOIN 
                 Account_UserRole aur ON a.id = aur.accountId
             GROUP BY 
@@ -151,35 +151,35 @@ User.updateByID = async (user, response) => {
         await conn.beginTransaction();
         console.log(user)
 
-        // Find personID from accountID
-        const [accountRows] = await conn.execute('SELECT personId FROM Account WHERE id = ?', [user.accountID]);
+        // Find staffId from accountID
+        const [accountRows] = await conn.execute('SELECT staffId FROM Account WHERE id = ?', [user.accountID]);
         if (accountRows.length === 0) {
             throw new Error('Account not found');
         }
-        const personID = accountRows[0].personId;
+        const staffId = accountRows[0].staffId;
 
-        // Update Person table
+        // Update Staff table
         await conn.execute(
-            `UPDATE Person 
+            `UPDATE Staff 
              SET firstName = ?, lastName = ?, email = ? 
              WHERE id = ?`,
-            [user.firstName, user.lastName, user.email, personID]
+            [user.firstName, user.lastName, user.email, staffId]
         );
 
         // Update Account table
         await conn.execute(
             `UPDATE Account 
              SET isDeactivated = ? 
-             WHERE personId = ?`,
-            [user.isDeactivated, personID]
+             WHERE staffId = ?`,
+            [user.isDeactivated, staffId]
         );
 
         // Update OrgUnit association
         await conn.execute(
             `UPDATE Person_OrgUnit 
              SET orgUnit = ? 
-             WHERE personId = ?`,
-            [user.orgUnit, personID]
+             WHERE staffId = ?`,
+            [user.orgUnit, staffId]
         );
 
         // Update user role
@@ -323,7 +323,7 @@ User.getUsersLastLogin = async (result) => {
         const selectLastLoginSql = `
         SELECT 
             l.actorId AS userID,
-            MAX(l.timeStampLog) AS newestDate
+            MAX(l.timestamp) AS newestDate
         FROM 
             Log l
             JOIN Account a ON l.actorId = a.id
@@ -355,7 +355,7 @@ User.checkIfEmailAlreadyUsed = async (email, response) => {
     let conn;
     try {
         conn = await connectionPool.promise().getConnection();
-        const [rows] = await conn.execute("SELECT * FROM Person WHERE email = ?", [email]);
+        const [rows] = await conn.execute("SELECT * FROM Staff WHERE email = ?", [email]);
         console.log(rows.length > 0)
         response(null, { exist: rows.length > 0 });
     } catch (err) {
@@ -429,9 +429,9 @@ User.findByEmail = async (email) => {
         const query = `
             SELECT p.firstName, p.lastName, p.email, a.id as accountId, a.isDeactivated, 
                 po.orgUnit, GROUP_CONCAT(aur.userRole) as roles, pw.hash as passwordHash
-            FROM Person p
-            JOIN Account a ON p.id = a.personId
-            LEFT JOIN Person_OrgUnit po ON p.id = po.personId
+            FROM Staff p
+            JOIN Account a ON p.id = a.staffId
+            LEFT JOIN Person_OrgUnit po ON p.id = po.staffId
             LEFT JOIN Account_UserRole aur ON a.id = aur.accountId
             LEFT JOIN Password pw ON a.id = pw.accountId
             WHERE p.email = ?
@@ -492,8 +492,8 @@ User.findSaltByEmail = async (email) => {
         conn = await connectionPool.promise().getConnection();
         const query = `
             SELECT pw.salt
-            FROM Person p
-            JOIN Account a ON p.id = a.personId
+            FROM Staff p
+            JOIN Account a ON p.id = a.staffId
             JOIN Password pw ON a.id = pw.accountId
             WHERE p.email = ?`;
         const [rows] = await conn.execute(query, [email]);

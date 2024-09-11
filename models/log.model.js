@@ -23,7 +23,7 @@ Log.create = async (log) => {
         await conn.beginTransaction();
         console.log(log)
         const insertLogSql = `
-            INSERT INTO Log (actorId, action, target, targetId, field, value, currentActorRole ,timeStampLog) 
+            INSERT INTO Log (actorId, action, target, targetId, field, value, currentActorRole ,timestamp) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         `;
         const logData = [
@@ -59,7 +59,7 @@ Log.findLogsByProjectID = async (projectID) => {
             SELECT l.*, p.firstName, p.lastName
             FROM Log l
             JOIN Account a ON l.actorId = a.id
-            JOIN Person p ON a.personId = p.id
+            JOIN Staff p ON a.staffId = p.id
             WHERE l.target = ? AND l.targetId = ?
         `;
 
@@ -72,7 +72,7 @@ Log.findLogsByProjectID = async (projectID) => {
             targetId: logRow.targetId,
             field: logRow.field,
             value: logRow.value,
-            timeStamp: logRow.timeStampLog,
+            timeStamp: logRow.timestamp,
             firstName: logRow.firstName,
             lastName: logRow.lastName,
             currentActorRole: logRow.currentActorRole
@@ -97,9 +97,9 @@ Log.findLogsByUserID = async (userID) => {
             SELECT l.*, p.firstName, p.lastName
             FROM Log l
             JOIN Account a ON l.actorId = a.id
-            JOIN Person p ON a.personId = p.id
+            JOIN Staff p ON a.staffId = p.id
             WHERE l.actorId = ?
-            ORDER BY l.timeStampLog DESC;
+            ORDER BY l.timestamp DESC;
         `;
 
         const [logRows] = await conn.execute(queryUserLog, [userID]);
@@ -111,7 +111,7 @@ Log.findLogsByUserID = async (userID) => {
             targetId: logRow.targetId,
             field: logRow.field,
             value: logRow.value,
-            timeStamp: logRow.timeStampLog,
+            timeStamp: logRow.timestamp,
             firstName: logRow.firstName,
             lastName: logRow.lastName,
             currentActorRole: logRow.currentActorRole
