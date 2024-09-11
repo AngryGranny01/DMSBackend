@@ -296,6 +296,12 @@ User.deactivateAccount = async (accountID) => {
             `UPDATE Account SET isDeactivated = true WHERE id = ?`,
             [accountID]
         );
+        // Delete the password related to the account
+        await conn.execute(
+            `DELETE FROM Password WHERE accountId = ?`,
+            [accountID]
+        );
+        
         return result;
     } catch (error) {
         console.error("Error occurred while deactivating account: ", error);
