@@ -22,12 +22,13 @@ User.create = async (userData) => {
 
         // Insert into Staff table
         const insertPersonSql = `
-            INSERT INTO Staff (firstName, lastName, email) 
-            VALUES (?, ?, ?)`;
+            INSERT INTO Staff (firstName, lastName, email, orgUnit) 
+            VALUES (?, ?, ?, ?)`;
         const [rowsPerson] = await conn.execute(insertPersonSql, [
             userData.firstName,
             userData.lastName,
-            userData.email
+            userData.email,
+            userData.orgUnit
         ]);
 
         const staffId = rowsPerson.insertId;
@@ -42,15 +43,6 @@ User.create = async (userData) => {
         ]);
 
         const accountID = rowsAccount.insertId;
-
-        // Insert into Person_OrgUnit table
-        const insertOrgUnitSql = `
-            INSERT INTO Person_OrgUnit (staffId, orgUnit) 
-            VALUES (?, ?)`;
-        await conn.execute(insertOrgUnitSql, [
-            staffId,
-            userData.orgUnit
-        ]);
 
         // Insert into Account_UserRole table
         const insertUserRoleSql = `
@@ -92,7 +84,7 @@ User.getAll = async (response) => {
                 p.firstName, 
                 p.lastName, 
                 p.email, 
-                po.orgUnit, 
+                p.orgUnit, 
                 a.isDeactivated,
                 GROUP_CONCAT(aur.userRole) AS roles
             FROM 
@@ -100,11 +92,9 @@ User.getAll = async (response) => {
             JOIN 
                 Account a ON p.id = a.staffId
             LEFT JOIN 
-                Person_OrgUnit po ON p.id = po.staffId
-            LEFT JOIN 
                 Account_UserRole aur ON a.id = aur.accountId
             GROUP BY 
-                p.id, p.firstName, p.lastName, p.email, po.orgUnit, a.isDeactivated
+                p.id, p.firstName, p.lastName, p.email, p.orgUnit, a.isDeactivated
         `;
 
         const [userRows] = await conn.execute(query);
@@ -161,9 +151,9 @@ User.updateByID = async (user, response) => {
         // Update Staff table
         await conn.execute(
             `UPDATE Staff 
-             SET firstName = ?, lastName = ?, email = ? 
+             SET firstName = ?, lastName = ?, email = ?,orgUnit = ?  
              WHERE id = ?`,
-            [user.firstName, user.lastName, user.email, staffId]
+            [user.firstName, user.lastName, user.email, user.orgUnit, staffId]
         );
 
         // Update Account table
@@ -172,14 +162,6 @@ User.updateByID = async (user, response) => {
              SET isDeactivated = ? 
              WHERE staffId = ?`,
             [user.isDeactivated, staffId]
-        );
-
-        // Update OrgUnit association
-        await conn.execute(
-            `UPDATE Person_OrgUnit 
-             SET orgUnit = ? 
-             WHERE staffId = ?`,
-            [user.orgUnit, staffId]
         );
 
         // Update user role
@@ -428,14 +410,13 @@ User.findByEmail = async (email) => {
         conn = await connectionPool.promise().getConnection();
         const query = `
             SELECT p.firstName, p.lastName, p.email, a.id as accountId, a.isDeactivated, 
-                po.orgUnit, GROUP_CONCAT(aur.userRole) as roles, pw.hash as passwordHash
+                p.orgUnit, GROUP_CONCAT(aur.userRole) as roles, pw.hash as passwordHash
             FROM Staff p
             JOIN Account a ON p.id = a.staffId
-            LEFT JOIN Person_OrgUnit po ON p.id = po.staffId
             LEFT JOIN Account_UserRole aur ON a.id = aur.accountId
             LEFT JOIN Password pw ON a.id = pw.accountId
             WHERE p.email = ?
-            GROUP BY p.firstName, p.lastName, p.email, a.id, a.isDeactivated, po.orgUnit, pw.hash`;
+            GROUP BY p.firstName, p.lastName, p.email, a.id, a.isDeactivated, p.orgUnit, pw.hash`;
         const [rows] = await conn.execute(query, [email]);
 
         if (rows.length === 0) {

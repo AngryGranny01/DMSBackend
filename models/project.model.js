@@ -66,10 +66,9 @@ Project.getAll = async () => {
         if (projectRows.length > 0) {
             for (const projectRow of projectRows) {
                 const managerQuery = `
-                SELECT a.id as accountID, p.firstName, p.lastName, p.email, ou.orgUnit 
+                SELECT a.id as accountID, p.firstName, p.lastName, p.email, p.orgUnit 
                 FROM Account a
                 JOIN Staff p ON a.staffId = p.id
-                JOIN Person_OrgUnit ou ON p.id = ou.staffId
                 WHERE a.id = ?`;
 
                 const [projectManager] = await conn.execute(managerQuery, [projectRow.managerId]);
@@ -119,11 +118,9 @@ Project.findByUserID = async (userID) => {
         if (projectRows.length > 0) {
             for (const projectRow of projectRows) {
                 const managerQuery = `
-                SELECT a.id as accountID, p.firstName, p.lastName, p.email, ou.name as orgUnit 
+                SELECT a.id as accountID, p.firstName, p.lastName, p.email, p.orgUnit
                 FROM Account a
                 JOIN Staff p ON a.staffId = p.id
-                JOIN Person_OrgUnit pou ON p.id = pou.staffId
-                JOIN OrgUnit ou ON pou.orgUnit = ou.name
                 WHERE a.id = ?;`;
 
                 const [projectManager] = await conn.execute(managerQuery, [projectRow.managerId]);
@@ -257,10 +254,9 @@ Project.getProjectUsers = async (projectUserRows) => {
         const users = [];
 
         const userDetailsQuery = `
-            SELECT a.id as accountID, p.firstName, p.lastName, p.email, ou.orgUnit, ur.userRole as role, a.isDeactivated
+            SELECT a.id as accountID, p.firstName, p.lastName, p.email, p.orgUnit, ur.userRole as role, a.isDeactivated
             FROM Account a
             JOIN Staff p ON a.staffId = p.id
-            JOIN Person_OrgUnit ou ON p.id = ou.staffId
             JOIN Account_UserRole ur ON a.id = ur.accountId
             WHERE a.id = ?`;
 
