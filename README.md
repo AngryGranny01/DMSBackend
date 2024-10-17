@@ -26,7 +26,7 @@ These instructions will get you a copy of the project up and running on your loc
     npm install
     ```
 
-3. Create a new MySQL database for the project and import the sample data from `db.sql` file provided in the project directory.
+3. Create a new MySQL database for the project and import the sample data from `databaseSetup.sql` file provided in the project directory.
 4. Modify the `.env` file to match your MySQL configuration settings.
 
 ### Running the Application
@@ -51,40 +51,32 @@ The following API endpoints are available:
 
 #### Users
 
-* `POST /users` - Create a new user
-* `GET /users` - Retrieve all users
-* `GET /users/:id` - Retrieve a specific user by ID
-* `PUT /users` - Update an existing user
-* `DELETE /users/:id` - Delete an existing user
-* `GET /users/checkEmailExist` - Check if email exists
-* `GET /users/checkUsernameExist` - Check if username exists
-* `GET /users/findSalt` - Find the salt for a given email
-* `PUT /verifyToken` - Verify a token
+* `POST /users` - Create a new user.
+* `GET /users` - Retrieve all users (Admin or Project Manager access required).
+* `GET /user/:userID` - Retrieve a specific user by ID (Admin access required).
+* `PUT /users` - Update an existing user (Admin or Project Manager access required).
+* `PUT /users/password` - Update a user's password.
+* `PUT /users/deactivate/:accountID` - Deactivate a user account (Admin access required).
+* `DELETE /users/:id` - Delete an existing user (Admin access required).
+* `GET /users/checkEmailExist` - Check if an email already exists.
+* `GET /users/findSalt` - Retrieve the salt value for a given email.
+* `PUT /verifyToken` - Verify a token and update a password.
 
 #### Projects
 
-* `POST /projects` - Create a new project
-* `GET /projects` - Retrieve all projects
-* `GET /projects/:userID` - Retrieve projects for a user
-* `PUT /projects` - Update an existing project
-* `DELETE /projects?projectID=:id` - Delete an existing project
+* `POST /projects` - Create a new project (Admin or Project Manager access required).
+* `GET /projects` - Retrieve all projects (Admin access required).
+* `GET /projects/:userID` - Retrieve all projects associated with a specific user.
+* `PUT /projects` - Update an existing project (Admin or Project Manager access required).
+* `DELETE /projects` - Delete an existing project by projectID (Admin or Project Manager access required).
 
 #### Logs
 
-* `POST /user-logs` - Create a user log
-* `GET /user-logs/:userID` - Retrieve logs for a specific user
-* `GET /user-logs/lastLogins/:userID` - Retrieve last login dates for a user
-* `POST /project-logs` - Create a project log
-* `GET /project-logs/:projectID` - Retrieve logs for a specific project
+* `POST /logs` - Create a new log entry (Admin or Project Manager access required).
+* `GET /logs/project/:projectID` - Retrieve logs for a specific project.
+* `GET /logs/user/:userID` - Retrieve logs for a specific user.
+* `GET /logs/lastLogins` - Retrieve the last login dates for all users.
 
 ### Logging
 
 The application includes detailed logging for various activities such as user creation, updates, deletions, project management, and error handling. Error logs are recorded to help diagnose and resolve issues effectively.
-
-### Contributing
-
-Feel free to fork this repository and submit pull requests. For major changes, please open an issue first to discuss what you would like to change.
-
-### License
-
-This project is licensed under the MIT License.
