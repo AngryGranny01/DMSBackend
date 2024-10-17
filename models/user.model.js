@@ -18,8 +18,6 @@ User.create = async (userData) => {
         conn = await connectionPool.promise().getConnection();
         await conn.beginTransaction();
 
-        let isAdmin = userData.role === Role.ADMIN;
-
         // Insert into Staff table
         const insertPersonSql = `
             INSERT INTO Staff (firstName, lastName, email, orgUnit) 
