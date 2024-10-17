@@ -66,10 +66,8 @@ CREATE TABLE IF NOT EXISTS Project (
     -- in months
     isArchived BOOLEAN NOT NULL DEFAULT false,
     managerId INT NOT NULL,
-    -- ! not null necessary? (admin has access anyways..)
     templateId INT UNIQUE,
     FOREIGN KEY (managerId) REFERENCES Account(id),
-    -- ! does mysql allow SET DEFAULT? -- rollback on cascade here?
     FOREIGN KEY (templateId) REFERENCES Document(id) ON DELETE
     SET
         NULL

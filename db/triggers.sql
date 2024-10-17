@@ -3,7 +3,7 @@ USE dmsproject;
 -- Sets projectId on insert of new project in the format YYYY%04d, where YYYY represents the current year and %04d are the first 4 digits of the counter of this year's projects (e.g. 20240023 for the 23. project in 2024)
 DELIMITER $$
 
-CREATE OR ALTER TRIGGER before_project_insert_check_id
+CREATE TRIGGER before_project_insert_check_id
 BEFORE INSERT ON project
 FOR EACH ROW
 BEGIN

@@ -1,3 +1,3 @@
 USE dmsproject;
 
-CREATE INDEX fullName ON person (lastName, firstName);
+CREATE INDEX fullName ON staff (lastName, firstName);
